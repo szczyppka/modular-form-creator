@@ -10,8 +10,14 @@ import {
   getResource,
   listResources,
   updateBasicInfo,
+  updateProjectDetails,
 } from '@/api/resources'
-import type { BasicInfoPayload, ListResourcesParams, ResourceId } from '@/api/types'
+import type {
+  BasicInfoPayload,
+  ListResourcesParams,
+  ProjectDetailsPayload,
+  ResourceId,
+} from '@/api/types'
 
 /** Hierarchical query keys — invalidating `all` covers every resource query. */
 export const resourceKeys = {
@@ -56,6 +62,18 @@ export function useUpdateBasicInfo(id: ResourceId) {
 
   return useMutation({
     mutationFn: (payload: BasicInfoPayload) => updateBasicInfo(id, payload),
+    onSuccess: (resource) => {
+      queryClient.setQueryData(resourceKeys.detail(resource.resourceId), resource)
+      void queryClient.invalidateQueries({ queryKey: resourceKeys.lists() })
+    },
+  })
+}
+
+export function useUpdateProjectDetails(id: ResourceId) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (payload: ProjectDetailsPayload) => updateProjectDetails(id, payload),
     onSuccess: (resource) => {
       queryClient.setQueryData(resourceKeys.detail(resource.resourceId), resource)
       void queryClient.invalidateQueries({ queryKey: resourceKeys.lists() })
