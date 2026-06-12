@@ -42,6 +42,9 @@ export default function ResourceOverviewPage() {
           </Header>
 
           <ResourceModules resource={resource} />
+          <DetailsLink to={routeTo.resourceDetails(resource.resourceId)}>
+            View summary
+          </DetailsLink>
           <ProvisionResourceAction resource={resource} />
           <SaveCompletedResourceAction resource={resource} />
 
@@ -83,4 +86,10 @@ const Title = styled.h1`
 const Meta = styled.p`
   margin-top: ${({ theme }) => theme.spacing.xs};
   color: ${({ theme }) => theme.colors.inkMuted};
+`
+
+const DetailsLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.primaryStrong};
+  font-weight: 600;
+  width: fit-content;
 `
