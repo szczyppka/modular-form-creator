@@ -1,5 +1,10 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
-import { listResources } from '@/api/resources'
+import {
+  keepPreviousData,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
+import { createResource, listResources } from '@/api/resources'
 import type { ListResourcesParams } from '@/api/types'
 
 /** Hierarchical query keys — invalidating `all` covers every resource query. */
@@ -7,6 +12,8 @@ export const resourceKeys = {
   all: ['resources'] as const,
   lists: () => [...resourceKeys.all, 'list'] as const,
   list: (params: ListResourcesParams) => [...resourceKeys.lists(), params] as const,
+  details: () => [...resourceKeys.all, 'detail'] as const,
+  detail: (id: number | string) => [...resourceKeys.details(), String(id)] as const,
 }
 
 export function useResourcesList(params: ListResourcesParams) {
@@ -15,5 +22,17 @@ export function useResourcesList(params: ListResourcesParams) {
     queryFn: ({ signal }) => listResources(params, signal),
     // keep showing the previous page while the next one loads — no layout flash
     placeholderData: keepPreviousData,
+  })
+}
+
+export function useCreateResource() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: createResource,
+    onSuccess: (resource) => {
+      queryClient.setQueryData(resourceKeys.detail(resource.resourceId), resource)
+      void queryClient.invalidateQueries({ queryKey: resourceKeys.lists() })
+    },
   })
 }

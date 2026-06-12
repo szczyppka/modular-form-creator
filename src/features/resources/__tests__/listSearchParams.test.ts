@@ -4,7 +4,7 @@ import {
   parseListSearchParams,
   toListRequestParams,
   type ResourcesListUrlState,
-} from './listSearchParams'
+} from '../listSearchParams'
 
 const params = (init: Record<string, string> = {}) => new URLSearchParams(init)
 

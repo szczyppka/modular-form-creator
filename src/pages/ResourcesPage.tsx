@@ -1,4 +1,5 @@
 import styled from 'styled-components'
+import { CreateResourceDrawer } from '@/features/resources/components/CreateResourceDrawer'
 import { ResourcesListContent } from '@/features/resources/components/ResourcesListContent'
 import { ResourcesListFilters } from '@/features/resources/components/ResourcesListFilters'
 import { useResourcesListUrlState } from '@/features/resources/useResourcesListUrlState'
@@ -9,7 +10,10 @@ export default function ResourcesPage() {
 
   return (
     <Page>
-      <Title>Resources</Title>
+      <Header>
+        <Title>Resources</Title>
+        <CreateResourceDrawer />
+      </Header>
 
       <ResourcesListFilters
         nameInput={nameInput}
@@ -34,6 +38,13 @@ const Page = styled.section`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.lg};
+`
+
+const Header = styled.header`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.md};
 `
 
 const Title = styled.h1`
