@@ -11,13 +11,10 @@ import {
 } from '../createResourceSchema'
 import { useCreateResource } from '../queries'
 
-function getErrorMessage(error: unknown): string | undefined {
-  if (!error) {
+/** Client errors (4xx) are field problems and surface next to the input instead. */
+function getGenericErrorMessage(error: unknown): string | undefined {
+  if (!error || (error instanceof ApiError && error.isClientError)) {
     return undefined
-  }
-
-  if (error instanceof ApiError) {
-    return error.message
   }
 
   return 'Unable to create the resource. Please try again.'
@@ -29,18 +26,25 @@ export function CreateResourceForm() {
   const {
     register,
     handleSubmit,
+    setError,
     formState: { errors },
   } = useForm<CreateResourceFormValues>({
     resolver: zodResolver(createResourceSchema),
     defaultValues: { resourceName: '' },
   })
   const isSubmitting = createMutation.isPending
-  const errorMessage = getErrorMessage(createMutation.error)
+  const errorMessage = getGenericErrorMessage(createMutation.error)
 
   const onSubmit = handleSubmit(({ resourceName }) => {
     createMutation.mutate(resourceName, {
       onSuccess: (resource) => {
         navigate(routeTo.resource(resource.resourceId))
+      },
+      onError: (error) => {
+        // backend validation (e.g. "resourceName must be unique") belongs at the field
+        if (error instanceof ApiError && error.isClientError) {
+          setError('resourceName', { type: 'server', message: error.message })
+        }
       },
     })
   })

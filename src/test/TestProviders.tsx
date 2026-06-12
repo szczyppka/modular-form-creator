@@ -1,28 +1,27 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { QueryClientProvider, type QueryClient } from '@tanstack/react-query'
 import { useState, type ReactNode } from 'react'
 import { MemoryRouter } from 'react-router-dom'
 import { ThemeProvider } from 'styled-components'
 import { theme } from '@/design-system'
-
-function createTestQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: { retry: false },
-      mutations: { retry: false },
-    },
-  })
-}
+import { createTestQueryClient } from './createTestQueryClient'
 
 interface TestProvidersProps {
   children: ReactNode
+  initialEntries?: string[]
+  queryClient?: QueryClient
 }
 
-export function TestProviders({ children }: TestProvidersProps) {
-  const [queryClient] = useState(createTestQueryClient)
+export function TestProviders({
+  children,
+  initialEntries = ['/'],
+  queryClient,
+}: TestProvidersProps) {
+  const [defaultQueryClient] = useState(createTestQueryClient)
+  const resolvedQueryClient = queryClient ?? defaultQueryClient
 
   return (
-    <MemoryRouter>
-      <QueryClientProvider client={queryClient}>
+    <MemoryRouter initialEntries={initialEntries}>
+      <QueryClientProvider client={resolvedQueryClient}>
         <ThemeProvider theme={theme}>{children}</ThemeProvider>
       </QueryClientProvider>
     </MemoryRouter>

@@ -15,6 +15,12 @@ describe('createResourceSchema', () => {
     },
   )
 
+  it('accepts a name at the 255-character boundary', () => {
+    expect(
+      createResourceSchema.safeParse({ resourceName: 'a'.repeat(255) }).success,
+    ).toBe(true)
+  })
+
   it('rejects names longer than 255 characters', () => {
     expect(
       createResourceSchema.safeParse({ resourceName: 'a'.repeat(256) }).success,
