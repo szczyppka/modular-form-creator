@@ -1,9 +1,5 @@
 import { createContext } from 'react'
-import type {
-  BasicInfoPayload,
-  ProjectDetailsPayload,
-  ResourceId,
-} from '@/api/types'
+import type { BasicInfoPayload, ProjectDetailsPayload, ResourceId } from '@/api/types'
 
 export interface CompletedResourceDraft {
   basicInfo?: BasicInfoPayload

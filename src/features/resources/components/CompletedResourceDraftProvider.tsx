@@ -1,9 +1,5 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react'
-import type {
-  BasicInfoPayload,
-  ProjectDetailsPayload,
-  ResourceId,
-} from '@/api/types'
+import type { BasicInfoPayload, ProjectDetailsPayload, ResourceId } from '@/api/types'
 import {
   CompletedResourceDraftContext,
   type CompletedResourceDraft,

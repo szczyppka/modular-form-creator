@@ -35,10 +35,7 @@ export function SaveCompletedResourceAction({
   const basicInfo = draft.basicInfo ?? resource.basicInfo
   const projectDetails = draft.projectDetails ?? resource.projectDetails
 
-  if (
-    !isBasicInfoComplete(basicInfo) ||
-    !isProjectDetailsComplete(projectDetails)
-  ) {
+  if (!isBasicInfoComplete(basicInfo) || !isProjectDetailsComplete(projectDetails)) {
     return (
       <ErrorMessage role="alert">
         The resource data is incomplete and cannot be saved.

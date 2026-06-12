@@ -56,9 +56,7 @@ export function ProjectDetailsForm({ resource }: ProjectDetailsFormProps) {
         bufferedProjectDetails?.projectName ?? resource.projectDetails.projectName,
       budget: bufferedProjectDetails?.budget ?? resource.projectDetails.budget,
       category:
-        bufferedProjectDetails?.category ||
-        resource.projectDetails.category ||
-        undefined,
+        bufferedProjectDetails?.category || resource.projectDetails.category || undefined,
       options: bufferedProjectDetails?.options ?? resource.projectDetails.options,
     },
   })

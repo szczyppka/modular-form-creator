@@ -49,8 +49,7 @@ export function BasicInfoForm({ resource }: BasicInfoFormProps) {
       owner: bufferedBasicInfo?.owner ?? resource.basicInfo.owner,
       email: bufferedBasicInfo?.email ?? resource.basicInfo.email,
       description: bufferedBasicInfo?.description ?? resource.basicInfo.description,
-      priority:
-        bufferedBasicInfo?.priority || resource.basicInfo.priority || undefined,
+      priority: bufferedBasicInfo?.priority || resource.basicInfo.priority || undefined,
     },
   })
   const isCompleted = resource.status === 'completed'
