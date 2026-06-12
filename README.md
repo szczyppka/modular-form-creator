@@ -76,13 +76,13 @@ App runs at `http://localhost:5173` (CORS on the backend is configured for this 
 - A resource starts as `draft`; its name is set at creation.
 - Project Details unlocks only after Basic Info is complete (draft resources).
 - `draft -> completed` happens only through provisioning, allowed only when both modules are complete; re-provisioning is rejected.
-- Edits to a `completed` resource are buffered in frontend state and persisted only on explicit submit (`PUT`); the buffer is lost on refresh.
+- Edits to a `completed` resource are buffered in frontend memory, survive navigation between app routes, and are persisted only on explicit submit (`PUT`); the buffer is lost on refresh or close.
 
 Full API contract: [backend/README.md](backend/README.md).
 
 ## Tests
 
 - Feature tests are grouped in `src/features/<feature>/__tests__`.
-- Shared React Testing Library setup and provider helpers live in `src/test`.
+- Shared React Testing Library setup and provider helpers live in `src/test-utils`.
 - Test files describe user-visible behavior and business rules rather than
   component implementation details.
