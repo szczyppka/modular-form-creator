@@ -1,9 +1,11 @@
 import styled from 'styled-components'
+import { RouterProvider } from 'react-router-dom'
+import { router } from './app/router'
 
 function App() {
   return (
     <AppShell>
-      <Message>Good luck!</Message>
+      <RouterProvider router={router} />
     </AppShell>
   )
 }
@@ -13,11 +15,6 @@ const AppShell = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-`
-
-const Message = styled.h1`
-  font-size: 2.5rem;
-  color: ${({ theme }) => theme.colors.inkStrong};
 `
 
 export default App
