@@ -17,7 +17,7 @@ export const router = createBrowserRouter([
   {
     path: routePaths.resource,
     lazy: async () => ({
-      Component: (await import('../pages/ResourceOverviewPage')).default,
+      Component: (await import('../pages/ResourcePage')).default,
     }),
   },
   {

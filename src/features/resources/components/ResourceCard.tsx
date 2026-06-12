@@ -7,15 +7,8 @@ import { Button, Card } from '@/design-system'
 import type { DeleteTarget } from './DeleteResourceDialog'
 import { ResourceStatusBadge } from './ResourceStatusBadge'
 
-const dateFormatter = new Intl.DateTimeFormat('en-GB', {
-  day: '2-digit',
-  month: 'short',
-  year: 'numeric',
-})
-
 interface ResourceCardProps {
   resource: Resource
-  /** Must be referentially stable (useCallback) — it is part of the memo contract. */
   onDeleteRequest: (target: DeleteTarget) => void
 }
 
@@ -29,30 +22,41 @@ export const ResourceCard = memo(function ResourceCard({
   resource,
   onDeleteRequest,
 }: ResourceCardProps) {
+  const isCompleted = resource.status === 'completed'
+
   return (
     <Card variant="outline">
       <CardBody>
-        <ResourceLink to={routeTo.resource(resource.resourceId)}>
-          <div>
+        <ResourceInfo>
+          <ResourceLink to={routeTo.resource(resource.resourceId)}>
             <Name>{resource.name}</Name>
-            <Meta>
-              #{resource.resourceId} · created{' '}
-              {dateFormatter.format(new Date(resource.createdAt))}
-            </Meta>
-          </div>
+          </ResourceLink>
           <ResourceStatusBadge status={resource.status} />
-        </ResourceLink>
-        <Button
-          type="button"
-          variant="secondary"
-          size="small"
-          onClick={() =>
-            onDeleteRequest({ resourceId: resource.resourceId, name: resource.name })
-          }
-          aria-label={`Delete ${resource.name}`}
-        >
-          Delete
-        </Button>
+        </ResourceInfo>
+
+        <Actions>
+          {isCompleted ? (
+            <ActionLink to={routeTo.resourceDetails(resource.resourceId)}>
+              View summary
+            </ActionLink>
+          ) : (
+            <ActionLink to={routeTo.resource(resource.resourceId)}>Edit</ActionLink>
+          )}
+          <Button
+            type="button"
+            variant="secondary"
+            size="small"
+            onClick={() =>
+              onDeleteRequest({
+                resourceId: resource.resourceId,
+                name: resource.name,
+              })
+            }
+            aria-label={`Delete ${resource.name}`}
+          >
+            Delete
+          </Button>
+        </Actions>
       </CardBody>
     </Card>
   )
@@ -61,18 +65,13 @@ export const ResourceCard = memo(function ResourceCard({
 const Name = styled.h2`
   margin: 0;
   font-family: ${({ theme }) => theme.typography.heading};
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: ${({ theme }) => theme.colors.inkStrong};
 `
 
 const ResourceLink = styled(Link)`
   text-decoration: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: ${({ theme }) => theme.spacing.md};
   min-width: 0;
-  flex: 1;
 
   &:hover ${Name} {
     color: ${({ theme }) => theme.colors.primaryStrong};
@@ -82,11 +81,37 @@ const ResourceLink = styled(Link)`
 const CardBody = styled.div`
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.md};
 `
 
-const Meta = styled.p`
-  margin: ${({ theme }) => theme.spacing.xs} 0 0;
-  font-size: 0.85rem;
-  color: ${({ theme }) => theme.colors.inkMuted};
+const ResourceInfo = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
+  gap: ${({ theme }) => theme.spacing.md};
+`
+
+const Actions = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.md};
+`
+
+const ActionLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.primaryStrong};
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline-offset: 2px;
+  }
 `

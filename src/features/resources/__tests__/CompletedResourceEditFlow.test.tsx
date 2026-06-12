@@ -10,7 +10,7 @@ import {
 } from '@/api/resources'
 import BasicInfoPage from '@/pages/BasicInfoPage'
 import ProjectDetailsPage from '@/pages/ProjectDetailsPage'
-import ResourceOverviewPage from '@/pages/ResourceOverviewPage'
+import ResourcePage from '@/pages/ResourcePage'
 import { renderWithProviders } from '@/test/renderWithProviders'
 import { createResourceFixture } from './resourceTestFixture'
 
@@ -45,7 +45,7 @@ const completedResource = createResourceFixture({
 function renderFlow(initialEntry = `/resources/${completedResource.resourceId}`) {
   return renderWithProviders(
     <Routes>
-      <Route path="/resources/:resourceId" element={<ResourceOverviewPage />} />
+      <Route path="/resources/:resourceId" element={<ResourcePage />} />
       <Route path="/resources/:resourceId/basic-info" element={<BasicInfoPage />} />
       <Route
         path="/resources/:resourceId/project-details"

@@ -3,6 +3,7 @@ import { ApiError } from '@/api/apiError'
 import type { ResourceId } from '@/api/types'
 import { Button, Drawer } from '@/design-system'
 import { useDeleteResource } from '../queries'
+import { useCompletedResourceDraft } from '../useCompletedResourceDraft'
 
 /** Minimal data the confirmation needs — callers don't pass whole resources around. */
 export interface DeleteTarget {
@@ -38,6 +39,7 @@ export function DeleteResourceDialog({
   onClose,
   onDeleted,
 }: DeleteResourceDialogProps) {
+  const { clear } = useCompletedResourceDraft(target?.resourceId ?? '')
   const {
     mutate: deleteResource,
     reset: resetMutation,
@@ -56,6 +58,7 @@ export function DeleteResourceDialog({
     if (!target) return
     deleteResource(target.resourceId, {
       onSuccess: () => {
+        clear(target.resourceId)
         resetMutation()
         onClose()
         onDeleted?.()

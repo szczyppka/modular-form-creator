@@ -4,7 +4,7 @@ import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/api/apiError'
 import { deleteResource, getResource, provisionResource } from '@/api/resources'
-import ResourceOverviewPage from '@/pages/ResourceOverviewPage'
+import ResourcePage from '@/pages/ResourcePage'
 import { renderWithProviders } from '@/test/renderWithProviders'
 import { createResourceFixture } from './resourceTestFixture'
 
@@ -24,13 +24,13 @@ function renderPage() {
   return renderWithProviders(
     <Routes>
       <Route path="/resources" element={<p>Resources list</p>} />
-      <Route path="/resources/:resourceId" element={<ResourceOverviewPage />} />
+      <Route path="/resources/:resourceId" element={<ResourcePage />} />
     </Routes>,
     { initialEntries: [`/resources/${resource.resourceId}`] },
   )
 }
 
-describe('ResourceOverviewPage', () => {
+describe('ResourcePage', () => {
   beforeEach(() => {
     vi.mocked(getResource).mockReset()
     vi.mocked(deleteResource).mockReset()
@@ -91,6 +91,50 @@ describe('ResourceOverviewPage', () => {
     expect(screen.getByText(/Completion unlocks/)).toBeInTheDocument()
   })
 
+  it('keeps Project Details locked until Basic Info is complete', async () => {
+    vi.mocked(getResource).mockResolvedValue(resource)
+
+    renderPage()
+
+    const projectDetailsHeading = await screen.findByRole('heading', {
+      name: 'Project Details',
+    })
+    const projectDetailsModule = projectDetailsHeading.closest('li')
+
+    expect(projectDetailsModule).not.toBeNull()
+    expect(within(projectDetailsModule!).getByText('Locked')).toBeInTheDocument()
+    expect(
+      within(projectDetailsModule!).queryByRole('link', { name: 'Edit' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('unlocks Project Details after Basic Info is complete', async () => {
+    vi.mocked(getResource).mockResolvedValue(
+      createResourceFixture({
+        basicInfo: {
+          resourceName: resource.name,
+          owner: 'Jane Doe',
+          email: 'jane@company.com',
+          description: 'Handles onboarding.',
+          priority: 'high',
+        },
+      }),
+    )
+
+    renderPage()
+
+    const projectDetailsHeading = await screen.findByRole('heading', {
+      name: 'Project Details',
+    })
+    const projectDetailsModule = projectDetailsHeading.closest('li')
+
+    expect(projectDetailsModule).not.toBeNull()
+    expect(
+      within(projectDetailsModule!).getByRole('link', { name: 'Edit' }),
+    ).toHaveAttribute('href', `/resources/${resource.resourceId}/project-details`)
+    expect(within(projectDetailsModule!).queryByText('Locked')).not.toBeInTheDocument()
+  })
+
   it('completes a resource and updates the cached status', async () => {
     const user = userEvent.setup()
     const completeDraft = createResourceFixture({
@@ -117,9 +161,7 @@ describe('ResourceOverviewPage', () => {
 
     renderPage()
 
-    await user.click(
-      await screen.findByRole('button', { name: 'Complete resource' }),
-    )
+    await user.click(await screen.findByRole('button', { name: 'Complete resource' }))
 
     expect(vi.mocked(provisionResource)).toHaveBeenCalledWith(resource.resourceId)
     expect(await screen.findByText('Completed')).toBeInTheDocument()
@@ -152,9 +194,7 @@ describe('ResourceOverviewPage', () => {
 
     renderPage()
 
-    await user.click(
-      await screen.findByRole('button', { name: 'Complete resource' }),
-    )
+    await user.click(await screen.findByRole('button', { name: 'Complete resource' }))
 
     expect(await screen.findByRole('alert')).toHaveTextContent(
       'Completed resource cannot be reprovisioned.',

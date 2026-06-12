@@ -13,7 +13,13 @@ import { ResourceModules } from '@/features/resources/components/ResourceModules
 import { ResourceStatusBadge } from '@/features/resources/components/ResourceStatusBadge'
 import { SaveCompletedResourceAction } from '@/features/resources/components/SaveCompletedResourceAction'
 
-export default function ResourceOverviewPage() {
+const dateFormatter = new Intl.DateTimeFormat('en-GB', {
+  day: '2-digit',
+  month: 'short',
+  year: 'numeric',
+})
+
+export default function ResourcePage() {
   const { resourceId } = useParams()
   const navigate = useNavigate()
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
@@ -23,22 +29,32 @@ export default function ResourceOverviewPage() {
       {(resource) => (
         <Page>
           <BackLink to={routeTo.resources()}>Back to resources</BackLink>
+
           <Header>
-            <div>
+            <Info>
               <Title>{resource.name}</Title>
-              <Meta>Resource #{resource.resourceId}</Meta>
-            </div>
-            <ResourceStatusBadge status={resource.status} />
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() =>
-                setDeleteTarget({ resourceId: resource.resourceId, name: resource.name })
-              }
-              aria-label={`Delete ${resource.name}`}
-            >
-              Delete
-            </Button>
+              <Meta>
+                Resource #{resource.resourceId} · Created{' '}
+                {dateFormatter.format(new Date(resource.createdAt))}
+              </Meta>
+            </Info>
+
+            <HeaderActions>
+              <ResourceStatusBadge status={resource.status} />
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() =>
+                  setDeleteTarget({
+                    resourceId: resource.resourceId,
+                    name: resource.name,
+                  })
+                }
+                aria-label={`Delete ${resource.name}`}
+              >
+                Delete
+              </Button>
+            </HeaderActions>
           </Header>
 
           <ResourceModules resource={resource} />
@@ -67,6 +83,12 @@ const Page = styled.section`
   gap: ${({ theme }) => theme.spacing.lg};
 `
 
+const Info = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+`
+
 const BackLink = styled(Link)`
   color: ${({ theme }) => theme.colors.primaryStrong};
   width: fit-content;
@@ -76,6 +98,7 @@ const Header = styled.header`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.md};
 `
 
@@ -84,8 +107,15 @@ const Title = styled.h1`
 `
 
 const Meta = styled.p`
-  margin-top: ${({ theme }) => theme.spacing.xs};
+  margin: 0;
   color: ${({ theme }) => theme.colors.inkMuted};
+`
+
+const HeaderActions = styled.div`
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.md};
 `
 
 const DetailsLink = styled(Link)`
