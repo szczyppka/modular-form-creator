@@ -80,12 +80,20 @@ describe('BasicInfoPage', () => {
     expect(mockedUpdateBasicInfo).not.toHaveBeenCalled()
   })
 
-  it('does not render the form for a completed resource', async () => {
+  it('buffers completed-resource changes without calling the PATCH endpoint', async () => {
+    const user = userEvent.setup()
     mockedGetResource.mockResolvedValue(createResourceFixture({ status: 'completed' }))
 
     renderPage()
 
-    expect(await screen.findByText(/full-update flow/)).toBeInTheDocument()
-    expect(screen.queryByLabelText('Owner')).not.toBeInTheDocument()
+    expect(await screen.findByText(/kept locally/)).toBeInTheDocument()
+    await user.type(screen.getByLabelText('Owner'), 'Jane Doe')
+    await user.type(screen.getByLabelText('Email'), 'jane.doe@company.com')
+    await user.type(screen.getByLabelText('Description'), 'Handles onboarding.')
+    await user.selectOptions(screen.getByLabelText('Priority'), 'high')
+    await user.click(screen.getByRole('button', { name: 'Save draft changes' }))
+
+    expect(mockedUpdateBasicInfo).not.toHaveBeenCalled()
+    expect(await screen.findByText('Resource overview')).toBeInTheDocument()
   })
 })

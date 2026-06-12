@@ -34,9 +34,7 @@ export function ResourceModules({ resource }: ResourceModulesProps) {
               <Badge variant={module.complete ? 'success' : 'neutral'}>
                 {module.complete ? 'Complete' : 'Incomplete'}
               </Badge>
-              <ModuleLink to={module.to}>
-                {resource.status === 'draft' ? 'Edit' : 'View'}
-              </ModuleLink>
+              <ModuleLink to={module.to}>Edit</ModuleLink>
             </Row>
           </Card>
         </li>

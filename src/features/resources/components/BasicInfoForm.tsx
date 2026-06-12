@@ -8,6 +8,7 @@ import { routeTo } from '@/app/routes'
 import { Button, Input, Select } from '@/design-system'
 import { basicInfoSchema, type BasicInfoFormValues } from '../basicInfoSchema'
 import { useUpdateBasicInfo } from '../queries'
+import { useCompletedResourceDraft } from '../useCompletedResourceDraft'
 
 const PRIORITY_OPTIONS = [
   { value: '', label: 'Select priority' },
@@ -36,6 +37,8 @@ interface BasicInfoFormProps {
 export function BasicInfoForm({ resource }: BasicInfoFormProps) {
   const navigate = useNavigate()
   const updateMutation = useUpdateBasicInfo(resource.resourceId)
+  const { draft, setBasicInfo } = useCompletedResourceDraft(resource.resourceId)
+  const bufferedBasicInfo = draft?.basicInfo
   const {
     register,
     handleSubmit,
@@ -43,19 +46,32 @@ export function BasicInfoForm({ resource }: BasicInfoFormProps) {
   } = useForm<BasicInfoFormValues>({
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
-      owner: resource.basicInfo.owner,
-      email: resource.basicInfo.email,
-      description: resource.basicInfo.description,
-      priority: resource.basicInfo.priority || undefined,
+      owner: bufferedBasicInfo?.owner ?? resource.basicInfo.owner,
+      email: bufferedBasicInfo?.email ?? resource.basicInfo.email,
+      description: bufferedBasicInfo?.description ?? resource.basicInfo.description,
+      priority:
+        bufferedBasicInfo?.priority || resource.basicInfo.priority || undefined,
     },
   })
-  const isSubmitting = updateMutation.isPending
-  const errorMessage = getErrorMessage(updateMutation.error)
+  const isCompleted = resource.status === 'completed'
+  const isSubmitting = !isCompleted && updateMutation.isPending
+  const errorMessage = isCompleted ? undefined : getErrorMessage(updateMutation.error)
 
   const onSubmit = handleSubmit((values) => {
+    const payload = {
+      ...values,
+      resourceName: resource.basicInfo.resourceName || resource.name,
+    }
+
+    if (isCompleted) {
+      setBasicInfo(resource.resourceId, payload)
+      navigate(routeTo.resource(resource.resourceId))
+      return
+    }
+
     updateMutation.mutate(
       // the name is locked after creation — re-send the current value untouched
-      { ...values, resourceName: resource.basicInfo.resourceName || resource.name },
+      payload,
       { onSuccess: () => navigate(routeTo.resource(resource.resourceId)) },
     )
   })
@@ -104,7 +120,11 @@ export function BasicInfoForm({ resource }: BasicInfoFormProps) {
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving…' : 'Save Basic Info'}
+          {isSubmitting
+            ? 'Saving…'
+            : isCompleted
+              ? 'Save draft changes'
+              : 'Save Basic Info'}
         </Button>
       </Actions>
       {errorMessage ? <ErrorMessage role="alert">{errorMessage}</ErrorMessage> : null}

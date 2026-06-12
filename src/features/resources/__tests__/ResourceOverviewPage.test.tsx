@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/api/apiError'
-import { deleteResource, getResource } from '@/api/resources'
+import { deleteResource, getResource, provisionResource } from '@/api/resources'
 import ResourceOverviewPage from '@/pages/ResourceOverviewPage'
 import { renderWithProviders } from '@/test/renderWithProviders'
 import { createResourceFixture } from './resourceTestFixture'
@@ -14,6 +14,7 @@ vi.mock('@/api/resources', async (importOriginal) => {
     ...actual,
     getResource: vi.fn(),
     deleteResource: vi.fn(),
+    provisionResource: vi.fn(),
   }
 })
 
@@ -33,6 +34,7 @@ describe('ResourceOverviewPage', () => {
   beforeEach(() => {
     vi.mocked(getResource).mockReset()
     vi.mocked(deleteResource).mockReset()
+    vi.mocked(provisionResource).mockReset()
   })
 
   it('renders the loaded resource with its delete action', async () => {
@@ -76,5 +78,86 @@ describe('ResourceOverviewPage', () => {
 
     expect(await screen.findByText('Resources list')).toBeInTheDocument()
     expect(vi.mocked(deleteResource)).toHaveBeenCalledOnce()
+  })
+
+  it('keeps completion disabled until both modules are complete', async () => {
+    vi.mocked(getResource).mockResolvedValue(resource)
+
+    renderPage()
+
+    expect(
+      await screen.findByRole('button', { name: 'Complete resource' }),
+    ).toBeDisabled()
+    expect(screen.getByText(/Completion unlocks/)).toBeInTheDocument()
+  })
+
+  it('completes a resource and updates the cached status', async () => {
+    const user = userEvent.setup()
+    const completeDraft = createResourceFixture({
+      basicInfo: {
+        resourceName: resource.name,
+        owner: 'Jane Doe',
+        email: 'jane@company.com',
+        description: 'Handles onboarding.',
+        priority: 'high',
+      },
+      projectDetails: {
+        projectName: 'Onboarding Portal',
+        budget: '25000',
+        category: 'internal',
+        options: ['FE devs'],
+      },
+    })
+    const completed = { ...completeDraft, status: 'completed' as const }
+    vi.mocked(getResource).mockResolvedValue(completeDraft)
+    vi.mocked(provisionResource).mockResolvedValue({
+      alreadyCompleted: false,
+      resource: completed,
+    })
+
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Complete resource' }),
+    )
+
+    expect(vi.mocked(provisionResource)).toHaveBeenCalledWith(resource.resourceId)
+    expect(await screen.findByText('Completed')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Complete resource' }),
+    ).not.toBeInTheDocument()
+  })
+
+  it('shows a provisioning business error returned with status 400', async () => {
+    const user = userEvent.setup()
+    const completeDraft = createResourceFixture({
+      basicInfo: {
+        resourceName: resource.name,
+        owner: 'Jane Doe',
+        email: 'jane@company.com',
+        description: 'Handles onboarding.',
+        priority: 'high',
+      },
+      projectDetails: {
+        projectName: 'Onboarding Portal',
+        budget: '25000',
+        category: 'internal',
+        options: ['FE devs'],
+      },
+    })
+    vi.mocked(getResource).mockResolvedValue(completeDraft)
+    vi.mocked(provisionResource).mockRejectedValue(
+      new ApiError(400, 'Completed resource cannot be reprovisioned.'),
+    )
+
+    renderPage()
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Complete resource' }),
+    )
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'Completed resource cannot be reprovisioned.',
+    )
   })
 })

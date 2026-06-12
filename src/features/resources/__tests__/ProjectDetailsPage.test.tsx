@@ -129,13 +129,18 @@ describe('ProjectDetailsPage', () => {
     expect(mockedUpdateProjectDetails).not.toHaveBeenCalled()
   })
 
-  it('does not render the form for a completed resource', async () => {
-    mockedGetResource.mockResolvedValue(createResourceFixture({ status: 'completed' }))
+  it('allows a completed resource to edit without showing the draft gate', async () => {
+    mockedGetResource.mockResolvedValue(
+      createResourceFixture({
+        status: 'completed',
+        basicInfo: draftWithCompleteBasicInfo.basicInfo,
+      }),
+    )
 
     renderPage()
 
-    expect(await screen.findByText(/full-update flow/)).toBeInTheDocument()
-    expect(screen.queryByLabelText('Project name')).not.toBeInTheDocument()
+    expect(await screen.findByText(/kept locally/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Project name')).toBeInTheDocument()
     expect(
       screen.queryByRole('link', { name: 'Complete Basic Info first' }),
     ).not.toBeInTheDocument()

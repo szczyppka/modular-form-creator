@@ -7,8 +7,11 @@ import {
   DeleteResourceDialog,
   type DeleteTarget,
 } from '@/features/resources/components/DeleteResourceDialog'
+import { ProvisionResourceAction } from '@/features/resources/components/ProvisionResourceAction'
 import { ResourceGate } from '@/features/resources/components/ResourceGate'
+import { ResourceModules } from '@/features/resources/components/ResourceModules'
 import { ResourceStatusBadge } from '@/features/resources/components/ResourceStatusBadge'
+import { SaveCompletedResourceAction } from '@/features/resources/components/SaveCompletedResourceAction'
 
 export default function ResourceOverviewPage() {
   const { resourceId } = useParams()
@@ -38,14 +41,9 @@ export default function ResourceOverviewPage() {
             </Button>
           </Header>
 
-          <Modules aria-label="Resource modules">
-            <ModuleLink to={routeTo.basicInfo(resource.resourceId)}>
-              Basic Info
-            </ModuleLink>
-            <ModuleLink to={routeTo.projectDetails(resource.resourceId)}>
-              Project Details
-            </ModuleLink>
-          </Modules>
+          <ResourceModules resource={resource} />
+          <ProvisionResourceAction resource={resource} />
+          <SaveCompletedResourceAction resource={resource} />
 
           <DeleteResourceDialog
             target={deleteTarget}
@@ -85,14 +83,4 @@ const Title = styled.h1`
 const Meta = styled.p`
   margin-top: ${({ theme }) => theme.spacing.xs};
   color: ${({ theme }) => theme.colors.inkMuted};
-`
-
-const Modules = styled.nav`
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-const ModuleLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.primaryStrong};
-  font-weight: 600;
 `

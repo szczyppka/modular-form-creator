@@ -46,10 +46,10 @@ export function ProvisionResourceAction({ resource }: ProvisionResourceActionPro
         disabled={!modulesComplete || isProvisioning}
         onClick={() => provisionMutation.mutate()}
       >
-        {isProvisioning ? 'Provisioning…' : 'Provision resource'}
+        {isProvisioning ? 'Completing…' : 'Complete resource'}
       </Button>
       {!modulesComplete ? (
-        <Hint>Provisioning unlocks after both modules are complete.</Hint>
+        <Hint>Completion unlocks after both modules are complete.</Hint>
       ) : null}
       {errorMessage ? <ErrorMessage role="alert">{errorMessage}</ErrorMessage> : null}
     </Section>

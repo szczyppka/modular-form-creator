@@ -25,8 +25,7 @@ export default function ProjectDetailsPage() {
 
             {isCompleted ? (
               <StateMessage>
-                This resource is completed — module editing is handled through the
-                full-update flow.
+                Changes are kept locally until you submit them from the overview.
               </StateMessage>
             ) : null}
 
@@ -41,7 +40,7 @@ export default function ProjectDetailsPage() {
               </LockedState>
             ) : null}
 
-            {canEdit ? <ProjectDetailsForm resource={resource} /> : null}
+            {canEdit || isCompleted ? <ProjectDetailsForm resource={resource} /> : null}
           </Page>
         )
       }}

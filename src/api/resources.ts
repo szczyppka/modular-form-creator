@@ -3,6 +3,7 @@ import type {
   BasicInfoPayload,
   ListResourcesParams,
   ProjectDetailsPayload,
+  ProvisionResourceResponse,
   Resource,
   ResourceId,
   ResourceListResponse,
@@ -58,8 +59,12 @@ export async function updateProjectDetails(
  * The only way to change status (`draft -> completed`).
  * Requires both modules complete; re-provisioning is rejected with 400.
  */
-export async function provisionResource(id: ResourceId): Promise<Resource> {
-  const { data } = await apiClient.patch<Resource>(`/resources/${id}/provisioning`)
+export async function provisionResource(
+  id: ResourceId,
+): Promise<ProvisionResourceResponse> {
+  const { data } = await apiClient.patch<ProvisionResourceResponse>(
+    `/resources/${id}/provisioning`,
+  )
   return data
 }
 

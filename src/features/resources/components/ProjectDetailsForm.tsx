@@ -11,6 +11,7 @@ import {
   type ProjectDetailsFormValues,
 } from '../projectDetailsSchema'
 import { useUpdateProjectDetails } from '../queries'
+import { useCompletedResourceDraft } from '../useCompletedResourceDraft'
 
 const CATEGORY_OPTIONS = [
   { value: '', label: 'Select category' },
@@ -41,6 +42,8 @@ interface ProjectDetailsFormProps {
 export function ProjectDetailsForm({ resource }: ProjectDetailsFormProps) {
   const navigate = useNavigate()
   const updateMutation = useUpdateProjectDetails(resource.resourceId)
+  const { draft, setProjectDetails } = useCompletedResourceDraft(resource.resourceId)
+  const bufferedProjectDetails = draft?.projectDetails
   const {
     register,
     control,
@@ -49,16 +52,27 @@ export function ProjectDetailsForm({ resource }: ProjectDetailsFormProps) {
   } = useForm<ProjectDetailsFormValues>({
     resolver: zodResolver(projectDetailsSchema),
     defaultValues: {
-      projectName: resource.projectDetails.projectName,
-      budget: resource.projectDetails.budget,
-      category: resource.projectDetails.category || undefined,
-      options: resource.projectDetails.options,
+      projectName:
+        bufferedProjectDetails?.projectName ?? resource.projectDetails.projectName,
+      budget: bufferedProjectDetails?.budget ?? resource.projectDetails.budget,
+      category:
+        bufferedProjectDetails?.category ||
+        resource.projectDetails.category ||
+        undefined,
+      options: bufferedProjectDetails?.options ?? resource.projectDetails.options,
     },
   })
-  const isSubmitting = updateMutation.isPending
-  const errorMessage = getErrorMessage(updateMutation.error)
+  const isCompleted = resource.status === 'completed'
+  const isSubmitting = !isCompleted && updateMutation.isPending
+  const errorMessage = isCompleted ? undefined : getErrorMessage(updateMutation.error)
 
   const onSubmit = handleSubmit((values) => {
+    if (isCompleted) {
+      setProjectDetails(resource.resourceId, values)
+      navigate(routeTo.resource(resource.resourceId))
+      return
+    }
+
     updateMutation.mutate(values, {
       onSuccess: () => navigate(routeTo.resource(resource.resourceId)),
     })
@@ -114,7 +128,11 @@ export function ProjectDetailsForm({ resource }: ProjectDetailsFormProps) {
           Cancel
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting ? 'Saving…' : 'Save Project Details'}
+          {isSubmitting
+            ? 'Saving…'
+            : isCompleted
+              ? 'Save draft changes'
+              : 'Save Project Details'}
         </Button>
       </Actions>
       {errorMessage ? <ErrorMessage role="alert">{errorMessage}</ErrorMessage> : null}

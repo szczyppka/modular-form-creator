@@ -17,12 +17,10 @@ export default function BasicInfoPage() {
 
           {resource.status === 'completed' ? (
             <StateMessage>
-              This resource is completed — module editing is handled through the
-              full-update flow.
+              Changes are kept locally until you submit them from the overview.
             </StateMessage>
-          ) : (
-            <BasicInfoForm resource={resource} />
-          )}
+          ) : null}
+          <BasicInfoForm resource={resource} />
         </Page>
       )}
     </ResourceGate>
