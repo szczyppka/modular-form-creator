@@ -1,80 +1,60 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
-import { ApiError } from '@/api/apiError'
 import { routeTo } from '@/app/routes'
 import { Button } from '@/design-system'
 import {
   DeleteResourceDialog,
   type DeleteTarget,
 } from '@/features/resources/components/DeleteResourceDialog'
+import { ResourceGate } from '@/features/resources/components/ResourceGate'
 import { ResourceStatusBadge } from '@/features/resources/components/ResourceStatusBadge'
-import { useResource } from '@/features/resources/queries'
 
 export default function ResourceOverviewPage() {
   const { resourceId } = useParams()
   const navigate = useNavigate()
-  const resourceQuery = useResource(resourceId ?? '')
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
 
-  if (!resourceId) {
-    return <StateMessage role="alert">Resource id is missing.</StateMessage>
-  }
-
-  if (resourceQuery.isPending) {
-    return <StateMessage>Loading resource…</StateMessage>
-  }
-
-  if (resourceQuery.isError) {
-    const message =
-      resourceQuery.error instanceof ApiError
-        ? resourceQuery.error.message
-        : 'Unable to load the resource.'
-
-    return (
-      <StateMessage role="alert">
-        {message}{' '}
-        <Button
-          type="button"
-          variant="secondary"
-          size="small"
-          onClick={() => resourceQuery.refetch()}
-        >
-          Try again
-        </Button>
-      </StateMessage>
-    )
-  }
-
-  const resource = resourceQuery.data
-
   return (
-    <Page>
-      <BackLink to={routeTo.resources()}>Back to resources</BackLink>
-      <Header>
-        <div>
-          <Title>{resource.name}</Title>
-          <Meta>Resource #{resource.resourceId}</Meta>
-        </div>
-        <ResourceStatusBadge status={resource.status} />
-        <Button
-          type="button"
-          variant="secondary"
-          onClick={() =>
-            setDeleteTarget({ resourceId: resource.resourceId, name: resource.name })
-          }
-          aria-label={`Delete ${resource.name}`}
-        >
-          Delete
-        </Button>
-      </Header>
+    <ResourceGate resourceId={resourceId}>
+      {(resource) => (
+        <Page>
+          <BackLink to={routeTo.resources()}>Back to resources</BackLink>
+          <Header>
+            <div>
+              <Title>{resource.name}</Title>
+              <Meta>Resource #{resource.resourceId}</Meta>
+            </div>
+            <ResourceStatusBadge status={resource.status} />
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() =>
+                setDeleteTarget({ resourceId: resource.resourceId, name: resource.name })
+              }
+              aria-label={`Delete ${resource.name}`}
+            >
+              Delete
+            </Button>
+          </Header>
 
-      <DeleteResourceDialog
-        target={deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onDeleted={() => navigate(routeTo.resources())}
-      />
-    </Page>
+          <Modules aria-label="Resource modules">
+            <ModuleLink to={routeTo.basicInfo(resource.resourceId)}>
+              Basic Info
+            </ModuleLink>
+            <ModuleLink to={routeTo.projectDetails(resource.resourceId)}>
+              Project Details
+            </ModuleLink>
+          </Modules>
+
+          <DeleteResourceDialog
+            target={deleteTarget}
+            onClose={() => setDeleteTarget(null)}
+            onDeleted={() => navigate(routeTo.resources())}
+          />
+        </Page>
+      )}
+    </ResourceGate>
   )
 }
 
@@ -106,7 +86,13 @@ const Meta = styled.p`
   margin-top: ${({ theme }) => theme.spacing.xs};
   color: ${({ theme }) => theme.colors.inkMuted};
 `
-const StateMessage = styled.p`
-  margin: ${({ theme }) => theme.spacing.xl};
-  color: ${({ theme }) => theme.colors.inkMuted};
+
+const Modules = styled.nav`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.md};
+`
+
+const ModuleLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.primaryStrong};
+  font-weight: 600;
 `
