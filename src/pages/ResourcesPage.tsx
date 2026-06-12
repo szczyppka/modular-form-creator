@@ -1,5 +1,5 @@
 import styled from 'styled-components'
-import { CreateResourceDrawer } from '@/features/resources/components/CreateResourceDrawer'
+import { CreateResourceAction } from '@/features/resources/components/CreateResourceAction'
 import { ResourcesListContent } from '@/features/resources/components/ResourcesListContent'
 import { ResourcesListFilters } from '@/features/resources/components/ResourcesListFilters'
 import { useResourcesListUrlState } from '@/features/resources/useResourcesListUrlState'
@@ -12,7 +12,7 @@ export default function ResourcesPage() {
     <Page>
       <Header>
         <Title>Resources</Title>
-        <CreateResourceDrawer />
+        <CreateResourceAction />
       </Header>
 
       <ResourcesListFilters
