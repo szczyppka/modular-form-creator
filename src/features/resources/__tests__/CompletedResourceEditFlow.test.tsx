@@ -11,7 +11,7 @@ import {
 import BasicInfoPage from '@/pages/BasicInfoPage'
 import ProjectDetailsPage from '@/pages/ProjectDetailsPage'
 import ResourcePage from '@/pages/ResourcePage'
-import { renderWithProviders } from '@/test/renderWithProviders'
+import { renderWithProviders } from '@/test-utils/renderWithProviders'
 import { createResourceFixture } from './resourceTestFixture'
 
 vi.mock('@/api/resources', async (importOriginal) => {
@@ -104,24 +104,54 @@ describe('completed resource edit flow', () => {
     expect(screen.queryByText('Unsaved local changes')).not.toBeInTheDocument()
   })
 
-  it('keeps buffered values while navigating between module pages', async () => {
+  it('preserves dirty values when leaving a module without submitting it', async () => {
     const user = userEvent.setup()
     renderFlow(`/resources/${completedResource.resourceId}/project-details`)
 
     const projectNameInput = await screen.findByLabelText('Project name')
     await user.clear(projectNameInput)
     await user.type(projectNameInput, 'Updated Portal')
-    await user.click(screen.getByRole('button', { name: 'Save draft changes' }))
+    await user.click(screen.getByRole('button', { name: 'Back to overview' }))
 
     const modules = await screen.findByRole('list', { name: 'Resource modules' })
-    await user.click(within(modules).getAllByRole('link', { name: 'Edit' })[1])
+    const projectDetailsModule = within(modules)
+      .getByRole('heading', { name: 'Project Details' })
+      .closest('li')
+
+    expect(projectDetailsModule).not.toBeNull()
+    await user.click(within(projectDetailsModule!).getByRole('link', { name: 'Edit' }))
 
     expect(await screen.findByLabelText('Project name')).toHaveValue('Updated Portal')
     expect(updateProjectDetails).not.toHaveBeenCalled()
     expect(replaceResource).not.toHaveBeenCalled()
   })
 
-  it('loses buffered edits after the provider is remounted', async () => {
+  it('keeps incomplete changes in memory but blocks the full update', async () => {
+    const user = userEvent.setup()
+    renderFlow(`/resources/${completedResource.resourceId}/basic-info`)
+
+    await user.clear(await screen.findByLabelText('Owner'))
+    await user.click(screen.getByRole('button', { name: 'Back to overview' }))
+
+    expect(
+      await screen.findByText('The resource data is incomplete and cannot be saved.'),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('button', { name: 'Save pending changes' }),
+    ).not.toBeInTheDocument()
+    expect(replaceResource).not.toHaveBeenCalled()
+
+    const modules = screen.getByRole('list', { name: 'Resource modules' })
+    const basicInfoModule = within(modules)
+      .getByRole('heading', { name: 'Basic Info' })
+      .closest('li')
+
+    expect(basicInfoModule).not.toBeNull()
+    await user.click(within(basicInfoModule!).getByRole('link', { name: 'Edit' }))
+    expect(await screen.findByLabelText('Owner')).toHaveValue('')
+  })
+
+  it('loses automatically preserved edits after the provider is remounted', async () => {
     const user = userEvent.setup()
     const firstRender = renderFlow(
       `/resources/${completedResource.resourceId}/basic-info`,
@@ -130,7 +160,7 @@ describe('completed resource edit flow', () => {
     const ownerInput = await screen.findByLabelText('Owner')
     await user.clear(ownerInput)
     await user.type(ownerInput, 'Temporary Owner')
-    await user.click(screen.getByRole('button', { name: 'Save draft changes' }))
+    await user.click(screen.getByRole('button', { name: 'Back to overview' }))
     expect(await screen.findByText('Unsaved local changes')).toBeInTheDocument()
 
     firstRender.unmount()

@@ -6,7 +6,7 @@ import { getResource, updateBasicInfo } from '@/api/resources'
 import BasicInfoPage from '@/pages/BasicInfoPage'
 import ResourceDetailsPage from '@/pages/ResourceDetailsPage'
 import ResourcePage from '@/pages/ResourcePage'
-import { renderWithProviders } from '@/test/renderWithProviders'
+import { renderWithProviders } from '@/test-utils/renderWithProviders'
 import { createResourceFixture } from './resourceTestFixture'
 
 vi.mock('@/api/resources', async (importOriginal) => {
@@ -60,7 +60,10 @@ describe('ResourceDetailsPage', () => {
     expect(
       await screen.findByRole('heading', { name: 'Resource details' }),
     ).toBeInTheDocument()
-    expect(screen.getAllByText(completedResource.name)).toHaveLength(2)
+    expect(screen.getByRole('link', { name: completedResource.name })).toHaveAttribute(
+      'href',
+      `/resources/${completedResource.resourceId}`,
+    )
     expect(screen.getByText('Completed')).toBeInTheDocument()
     expect(screen.getByText('Jane Doe')).toBeInTheDocument()
     expect(screen.getByText('Onboarding Portal')).toBeInTheDocument()
@@ -82,7 +85,7 @@ describe('ResourceDetailsPage', () => {
     ).not.toBeInTheDocument()
   })
 
-  it('reflects buffered completed-resource edits in the summary', async () => {
+  it('reflects automatically preserved completed-resource edits in the summary', async () => {
     const user = userEvent.setup()
     vi.mocked(getResource).mockResolvedValue(completedResource)
 
@@ -91,7 +94,7 @@ describe('ResourceDetailsPage', () => {
     const ownerInput = await screen.findByLabelText('Owner')
     await user.clear(ownerInput)
     await user.type(ownerInput, 'John Smith')
-    await user.click(screen.getByRole('button', { name: 'Save draft changes' }))
+    await user.click(screen.getByRole('button', { name: 'Back to overview' }))
     expect(await screen.findByText('Unsaved local changes')).toBeInTheDocument()
     await user.click(screen.getByRole('link', { name: 'View summary' }))
 

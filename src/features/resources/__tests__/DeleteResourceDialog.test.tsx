@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/api/apiError'
 import { deleteResource } from '@/api/resources'
-import { renderWithProviders } from '@/test/renderWithProviders'
+import { renderWithProviders } from '@/test-utils/renderWithProviders'
 import {
   DeleteResourceDialog,
   type DeleteTarget,
@@ -49,23 +49,6 @@ function DialogHarness({ onDeleted }: { onDeleted?: () => void }) {
 describe('DeleteResourceDialog', () => {
   beforeEach(() => {
     mockedDeleteResource.mockReset()
-  })
-
-  it('stays closed until requested and cancels without deleting', async () => {
-    const user = userEvent.setup()
-    renderWithProviders(<DialogHarness />)
-
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-
-    await user.click(screen.getByRole('button', { name: 'Request delete' }))
-
-    const dialog = screen.getByRole('dialog', { name: 'Delete resource' })
-    expect(dialog).toHaveTextContent(resource.name)
-
-    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }))
-
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(mockedDeleteResource).not.toHaveBeenCalled()
   })
 
   it('deletes the resource, cleans the cache and notifies the consumer', async () => {

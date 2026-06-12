@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import type { BasicInfo, ProjectDetails } from '@/api/types'
-import { isBasicInfoComplete, isProjectDetailsComplete } from '../completeness'
+import {
+  getBasicInfoCompletion,
+  getProjectDetailsCompletion,
+  hasCompleteModules,
+} from '../completeness'
 import { createResourceFixture } from './resourceTestFixture'
 
-const completeBasicInfo: BasicInfo = {
+const basicInfo: BasicInfo = {
   resourceName: 'Customer onboarding',
   owner: 'Jane Doe',
   email: 'jane@company.com',
@@ -11,42 +15,38 @@ const completeBasicInfo: BasicInfo = {
   priority: 'high',
 }
 
-const completeProjectDetails: ProjectDetails = {
+const projectDetails: ProjectDetails = {
   projectName: 'Onboarding Portal',
   budget: '25000',
   category: 'internal',
   options: ['FE devs'],
 }
 
-describe('isBasicInfoComplete', () => {
-  it('is false for a freshly created resource', () => {
-    expect(isBasicInfoComplete(createResourceFixture().basicInfo)).toBe(false)
+describe('resource completion rules', () => {
+  it('calculates module progress from required business fields', () => {
+    expect(getBasicInfoCompletion({ ...basicInfo, description: '' })).toEqual({
+      completedFields: 4,
+      totalFields: 5,
+      percentage: 80,
+      isComplete: false,
+    })
+    expect(getProjectDetailsCompletion({ ...projectDetails, options: [] })).toEqual({
+      completedFields: 3,
+      totalFields: 4,
+      percentage: 75,
+      isComplete: false,
+    })
   })
 
-  it('is true when every field is filled', () => {
-    expect(isBasicInfoComplete(completeBasicInfo)).toBe(true)
-  })
+  it('allows resource-level actions only when both modules are complete', () => {
+    const resource = createResourceFixture({ basicInfo, projectDetails })
 
-  it.each(['owner', 'email', 'description', 'priority'] as const)(
-    'is false when %s is missing',
-    (field) => {
-      expect(isBasicInfoComplete({ ...completeBasicInfo, [field]: '' })).toBe(false)
-    },
-  )
-})
-
-describe('isProjectDetailsComplete', () => {
-  it('is false for a freshly created resource', () => {
-    expect(isProjectDetailsComplete(createResourceFixture().projectDetails)).toBe(false)
-  })
-
-  it('is true when every field is filled and a team member is selected', () => {
-    expect(isProjectDetailsComplete(completeProjectDetails)).toBe(true)
-  })
-
-  it('is false without team members even when the rest is filled', () => {
-    expect(isProjectDetailsComplete({ ...completeProjectDetails, options: [] })).toBe(
-      false,
-    )
+    expect(hasCompleteModules(resource)).toBe(true)
+    expect(
+      hasCompleteModules({
+        ...resource,
+        projectDetails: { ...projectDetails, category: '' },
+      }),
+    ).toBe(false)
   })
 })

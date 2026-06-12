@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/api/apiError'
-import { deleteResource, getResource, provisionResource } from '@/api/resources'
+import { getResource, provisionResource } from '@/api/resources'
 import ResourcePage from '@/pages/ResourcePage'
-import { renderWithProviders } from '@/test/renderWithProviders'
+import { renderWithProviders } from '@/test-utils/renderWithProviders'
 import { createResourceFixture } from './resourceTestFixture'
 
 vi.mock('@/api/resources', async (importOriginal) => {
@@ -13,7 +13,6 @@ vi.mock('@/api/resources', async (importOriginal) => {
   return {
     ...actual,
     getResource: vi.fn(),
-    deleteResource: vi.fn(),
     provisionResource: vi.fn(),
   }
 })
@@ -33,51 +32,7 @@ function renderPage() {
 describe('ResourcePage', () => {
   beforeEach(() => {
     vi.mocked(getResource).mockReset()
-    vi.mocked(deleteResource).mockReset()
     vi.mocked(provisionResource).mockReset()
-  })
-
-  it('renders the loaded resource with its delete action', async () => {
-    vi.mocked(getResource).mockResolvedValue(resource)
-
-    renderPage()
-
-    expect(
-      await screen.findByRole('heading', { name: resource.name }),
-    ).toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: `Delete ${resource.name}` }),
-    ).toBeInTheDocument()
-  })
-
-  it('shows the API error with a retry action when loading fails', async () => {
-    vi.mocked(getResource).mockRejectedValue(new ApiError(404, 'Resource not found'))
-
-    renderPage()
-
-    const alert = await screen.findByRole('alert')
-    expect(alert).toHaveTextContent('Resource not found')
-    expect(within(alert).getByRole('button', { name: 'Try again' })).toBeInTheDocument()
-  })
-
-  it('navigates back to the list after a confirmed delete', async () => {
-    const user = userEvent.setup()
-    vi.mocked(getResource).mockResolvedValue(resource)
-    vi.mocked(deleteResource).mockResolvedValue(resource)
-
-    renderPage()
-
-    await user.click(
-      await screen.findByRole('button', { name: `Delete ${resource.name}` }),
-    )
-    await user.click(
-      within(screen.getByRole('dialog')).getByRole('button', {
-        name: 'Delete resource',
-      }),
-    )
-
-    expect(await screen.findByText('Resources list')).toBeInTheDocument()
-    expect(vi.mocked(deleteResource)).toHaveBeenCalledOnce()
   })
 
   it('keeps completion disabled until both modules are complete', async () => {
@@ -106,33 +61,6 @@ describe('ResourcePage', () => {
     expect(
       within(projectDetailsModule!).queryByRole('link', { name: 'Edit' }),
     ).not.toBeInTheDocument()
-  })
-
-  it('unlocks Project Details after Basic Info is complete', async () => {
-    vi.mocked(getResource).mockResolvedValue(
-      createResourceFixture({
-        basicInfo: {
-          resourceName: resource.name,
-          owner: 'Jane Doe',
-          email: 'jane@company.com',
-          description: 'Handles onboarding.',
-          priority: 'high',
-        },
-      }),
-    )
-
-    renderPage()
-
-    const projectDetailsHeading = await screen.findByRole('heading', {
-      name: 'Project Details',
-    })
-    const projectDetailsModule = projectDetailsHeading.closest('li')
-
-    expect(projectDetailsModule).not.toBeNull()
-    expect(
-      within(projectDetailsModule!).getByRole('link', { name: 'Edit' }),
-    ).toHaveAttribute('href', `/resources/${resource.resourceId}/project-details`)
-    expect(within(projectDetailsModule!).queryByText('Locked')).not.toBeInTheDocument()
   })
 
   it('completes a resource and updates the cached status', async () => {

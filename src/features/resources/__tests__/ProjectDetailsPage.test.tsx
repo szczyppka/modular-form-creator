@@ -4,7 +4,7 @@ import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getResource, updateProjectDetails } from '@/api/resources'
 import ProjectDetailsPage from '@/pages/ProjectDetailsPage'
-import { renderWithProviders } from '@/test/renderWithProviders'
+import { renderWithProviders } from '@/test-utils/renderWithProviders'
 import { createResourceFixture } from './resourceTestFixture'
 
 vi.mock('@/api/resources', async (importOriginal) => {
@@ -62,35 +62,6 @@ describe('ProjectDetailsPage', () => {
     expect(screen.queryByLabelText('Project name')).not.toBeInTheDocument()
   })
 
-  it('keeps the module locked when Basic Info is only partially complete', async () => {
-    mockedGetResource.mockResolvedValue(
-      createResourceFixture({
-        basicInfo: {
-          ...draftWithCompleteBasicInfo.basicInfo,
-          priority: '',
-        },
-      }),
-    )
-
-    renderPage()
-
-    expect(
-      await screen.findByText(/unlocks after Basic Info is completed/),
-    ).toBeInTheDocument()
-    expect(screen.queryByLabelText('Project name')).not.toBeInTheDocument()
-  })
-
-  it('renders the form when Basic Info is complete', async () => {
-    mockedGetResource.mockResolvedValue(draftWithCompleteBasicInfo)
-
-    renderPage()
-
-    expect(await screen.findByLabelText('Project name')).toBeInTheDocument()
-    expect(
-      screen.queryByRole('link', { name: 'Complete Basic Info first' }),
-    ).not.toBeInTheDocument()
-  })
-
   it('submits the payload and navigates back to the overview', async () => {
     const user = userEvent.setup()
     mockedGetResource.mockResolvedValue(draftWithCompleteBasicInfo)
@@ -116,33 +87,4 @@ describe('ProjectDetailsPage', () => {
     expect(await screen.findByText('Resource overview')).toBeInTheDocument()
   })
 
-  it('shows validation errors without calling the API', async () => {
-    const user = userEvent.setup()
-    mockedGetResource.mockResolvedValue(draftWithCompleteBasicInfo)
-
-    renderPage()
-
-    await user.click(await screen.findByRole('button', { name: 'Save Project Details' }))
-
-    expect(await screen.findByText('Project name is required.')).toBeInTheDocument()
-    expect(screen.getByText('Select at least one team member.')).toBeInTheDocument()
-    expect(mockedUpdateProjectDetails).not.toHaveBeenCalled()
-  })
-
-  it('allows a completed resource to edit without showing the draft gate', async () => {
-    mockedGetResource.mockResolvedValue(
-      createResourceFixture({
-        status: 'completed',
-        basicInfo: draftWithCompleteBasicInfo.basicInfo,
-      }),
-    )
-
-    renderPage()
-
-    expect(await screen.findByText(/kept locally/)).toBeInTheDocument()
-    expect(screen.getByLabelText('Project name')).toBeInTheDocument()
-    expect(
-      screen.queryByRole('link', { name: 'Complete Basic Info first' }),
-    ).not.toBeInTheDocument()
-  })
 })

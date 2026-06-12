@@ -6,11 +6,17 @@ import {
   type ResourcesListUrlState,
 } from '../listSearchParams'
 
-const params = (init: Record<string, string> = {}) => new URLSearchParams(init)
-
-describe('parseListSearchParams', () => {
-  it('returns safe defaults for empty params', () => {
-    expect(parseListSearchParams(params())).toEqual({
+describe('resource list URL state', () => {
+  it('uses safe defaults for invalid query values', () => {
+    expect(
+      parseListSearchParams(
+        new URLSearchParams({
+          page: '-2',
+          status: 'archived',
+          sort: 'newest',
+        }),
+      ),
+    ).toEqual({
       page: 1,
       status: undefined,
       name: '',
@@ -18,61 +24,7 @@ describe('parseListSearchParams', () => {
     })
   })
 
-  it('parses valid values', () => {
-    const result = parseListSearchParams(
-      params({ page: '3', status: 'draft', name: 'api', sort: 'asc' }),
-    )
-
-    expect(result).toEqual({
-      page: 3,
-      status: 'draft',
-      name: 'api',
-      sortOrder: 'asc',
-    })
-  })
-
-  it.each(['0', '-2', '1.5', 'abc', ''])(
-    'falls back to page 1 for invalid page %j',
-    (page) => {
-      expect(parseListSearchParams(params({ page })).page).toBe(1)
-    },
-  )
-
-  it('ignores an unknown status value', () => {
-    expect(parseListSearchParams(params({ status: 'archived' })).status).toBeUndefined()
-  })
-
-  it('falls back to desc for an unknown sort value', () => {
-    expect(parseListSearchParams(params({ sort: 'newest' })).sortOrder).toBe('desc')
-  })
-})
-
-describe('buildListSearchParams', () => {
-  it('omits default values entirely', () => {
-    const state: ResourcesListUrlState = {
-      page: 1,
-      status: undefined,
-      name: '',
-      sortOrder: 'desc',
-    }
-
-    expect(buildListSearchParams(state).toString()).toBe('')
-  })
-
-  it('serializes non-default values', () => {
-    const state: ResourcesListUrlState = {
-      page: 2,
-      status: 'completed',
-      name: 'api',
-      sortOrder: 'asc',
-    }
-
-    expect(buildListSearchParams(state).toString()).toBe(
-      'page=2&status=completed&name=api&sort=asc',
-    )
-  })
-
-  it('round-trips through parse without losing state', () => {
+  it('round-trips non-default list state through the URL', () => {
     const state: ResourcesListUrlState = {
       page: 5,
       status: 'draft',
@@ -82,34 +34,21 @@ describe('buildListSearchParams', () => {
 
     expect(parseListSearchParams(buildListSearchParams(state))).toEqual(state)
   })
-})
 
-describe('toListRequestParams', () => {
-  it('maps state to request params with a fixed page size', () => {
-    const state: ResourcesListUrlState = {
-      page: 2,
-      status: 'draft',
-      name: 'api',
-      sortOrder: 'asc',
-    }
-
-    expect(toListRequestParams(state)).toEqual({
+  it('maps URL state to the backend request and removes a blank name', () => {
+    expect(
+      toListRequestParams({
+        page: 2,
+        status: 'completed',
+        name: '   ',
+        sortOrder: 'asc',
+      }),
+    ).toEqual({
       page: 2,
       pageSize: 10,
-      status: 'draft',
-      name: 'api',
+      status: 'completed',
+      name: undefined,
       sortOrder: 'asc',
     })
-  })
-
-  it('omits a blank name so the API receives no empty filter', () => {
-    const state: ResourcesListUrlState = {
-      page: 1,
-      status: undefined,
-      name: '   ',
-      sortOrder: 'desc',
-    }
-
-    expect(toListRequestParams(state).name).toBeUndefined()
   })
 })

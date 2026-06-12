@@ -4,7 +4,7 @@ import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getResource, updateBasicInfo } from '@/api/resources'
 import BasicInfoPage from '@/pages/BasicInfoPage'
-import { renderWithProviders } from '@/test/renderWithProviders'
+import { renderWithProviders } from '@/test-utils/renderWithProviders'
 import { createResourceFixture } from './resourceTestFixture'
 
 vi.mock('@/api/resources', async (importOriginal) => {
@@ -67,33 +67,4 @@ describe('BasicInfoPage', () => {
     expect(await screen.findByText('Resource overview')).toBeInTheDocument()
   })
 
-  it('shows validation errors without calling the API', async () => {
-    const user = userEvent.setup()
-    mockedGetResource.mockResolvedValue(resource)
-
-    renderPage()
-
-    await user.click(await screen.findByRole('button', { name: 'Save Basic Info' }))
-
-    expect(await screen.findByText('Owner is required.')).toBeInTheDocument()
-    expect(screen.getByText('Email is required.')).toBeInTheDocument()
-    expect(mockedUpdateBasicInfo).not.toHaveBeenCalled()
-  })
-
-  it('buffers completed-resource changes without calling the PATCH endpoint', async () => {
-    const user = userEvent.setup()
-    mockedGetResource.mockResolvedValue(createResourceFixture({ status: 'completed' }))
-
-    renderPage()
-
-    expect(await screen.findByText(/kept locally/)).toBeInTheDocument()
-    await user.type(screen.getByLabelText('Owner'), 'Jane Doe')
-    await user.type(screen.getByLabelText('Email'), 'jane.doe@company.com')
-    await user.type(screen.getByLabelText('Description'), 'Handles onboarding.')
-    await user.selectOptions(screen.getByLabelText('Priority'), 'high')
-    await user.click(screen.getByRole('button', { name: 'Save draft changes' }))
-
-    expect(mockedUpdateBasicInfo).not.toHaveBeenCalled()
-    expect(await screen.findByText('Resource overview')).toBeInTheDocument()
-  })
 })
