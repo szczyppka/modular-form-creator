@@ -5,6 +5,8 @@ Resources Management application. Resources are created on a list page, filled i
 ## Tech stack
 
 - Frontend: React 19 + TypeScript + Vite + styled-components
+- Data fetching: TanStack Query + axios
+- Forms: react-hook-form + Zod
 - Backend: Express + TypeScript + MongoDB (see [backend/README.md](backend/README.md))
 - Tests: Vitest + React Testing Library
 

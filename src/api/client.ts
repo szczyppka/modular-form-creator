@@ -1,5 +1,5 @@
 import axios, { AxiosError } from 'axios'
-import { API_BASE_URL } from '../shared/config'
+import { API_BASE_URL } from '@/shared/config'
 import { ApiError } from './apiError'
 
 interface BackendErrorBody {

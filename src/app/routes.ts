@@ -1,4 +1,4 @@
-import type { ResourceId } from '../api/types'
+import type { ResourceId } from '@/api/types'
 
 /** Single source of truth for route paths - definitions and navigation builders. */
 export const routePaths = {

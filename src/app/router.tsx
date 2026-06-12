@@ -1,5 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom'
-import NotFoundPage from '../pages/NotFoundPage'
+import NotFoundPage from '@/pages/NotFoundPage'
 import { routePaths } from './routes'
 
 /** Route modules are lazy-loaded so each page becomes its own chunk. */

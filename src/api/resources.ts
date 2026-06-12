@@ -11,13 +11,20 @@ import type {
 
 export async function listResources(
   params: ListResourcesParams = {},
+  signal?: AbortSignal,
 ): Promise<ResourceListResponse> {
-  const { data } = await apiClient.get<ResourceListResponse>('/resources', { params })
+  const { data } = await apiClient.get<ResourceListResponse>('/resources', {
+    params,
+    signal,
+  })
   return data
 }
 
-export async function getResource(id: ResourceId): Promise<Resource> {
-  const { data } = await apiClient.get<Resource>(`/resources/${id}`)
+export async function getResource(
+  id: ResourceId,
+  signal?: AbortSignal,
+): Promise<Resource> {
+  const { data } = await apiClient.get<Resource>(`/resources/${id}`, { signal })
   return data
 }
 
