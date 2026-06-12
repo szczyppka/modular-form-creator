@@ -5,8 +5,7 @@ import { ResourcesListFilters } from '@/features/resources/components/ResourcesL
 import { useResourcesListUrlState } from '@/features/resources/useResourcesListUrlState'
 
 export default function ResourcesPage() {
-  const { urlState, requestParams, nameInput, setNameInput, updateUrl } =
-    useResourcesListUrlState()
+  const { urlState, requestParams, updateUrl } = useResourcesListUrlState()
 
   return (
     <Page>
@@ -16,12 +15,10 @@ export default function ResourcesPage() {
       </Header>
 
       <ResourcesListFilters
-        nameInput={nameInput}
-        onNameInputChange={setNameInput}
+        initialName={urlState.name}
         status={urlState.status}
         sortOrder={urlState.sortOrder}
         onChange={updateUrl}
-        requestParams={requestParams}
       />
 
       <ResourcesListContent

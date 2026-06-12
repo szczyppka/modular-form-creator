@@ -1,8 +1,9 @@
+import { useEffect, useState } from 'react'
 import styled from 'styled-components'
-import type { ListResourcesParams, ResourceStatus } from '@/api/types'
+import type { ResourceStatus } from '@/api/types'
 import { Input, Select } from '@/design-system'
+import { useDebouncedValue } from '@/shared/useDebouncedValue'
 import type { ResourcesListUrlState } from '../listSearchParams'
-import { useResourcesList } from '../queries'
 
 const STATUS_OPTIONS = [
   { value: '', label: 'All statuses' },
@@ -16,30 +17,29 @@ const SORT_OPTIONS = [
 ]
 
 interface ResourcesListFiltersProps {
-  nameInput: string
-  onNameInputChange: (value: string) => void
+  /** Initial search term from the URL — the input owns its value afterwards. */
+  initialName: string
   status: ResourceStatus | undefined
   sortOrder: 'asc' | 'desc'
   onChange: (patch: Partial<ResourcesListUrlState>) => void
-  requestParams: ListResourcesParams
 }
 
 export function ResourcesListFilters({
-  nameInput,
-  onNameInputChange,
+  initialName,
   status,
   sortOrder,
   onChange,
-  requestParams,
 }: ResourcesListFiltersProps) {
-  // shares the cache entry with ResourcesListContent — no extra request
-  const { data } = useResourcesList(requestParams)
+  // The input is the single owner of its text while mounted — never remount it
+  // (e.g. via a key) on URL updates, or the user loses focus mid-typing.
+  const [nameInput, setNameInput] = useState(initialName)
+  const debouncedName = useDebouncedValue(nameInput)
 
-  // disable only when the collection itself is empty; with any filter active the
-  // controls must stay usable so the user can clear them
-  const hasActiveFilters = Boolean(nameInput || status)
-  const isCollectionEmpty = !hasActiveFilters && data?.pagination.totalItems === 0
-  const fieldState = isCollectionEmpty ? 'disabled' : 'normal'
+  useEffect(() => {
+    if (debouncedName !== initialName) {
+      onChange({ name: debouncedName, page: 1 })
+    }
+  }, [initialName, debouncedName, onChange])
 
   return (
     <Bar>
@@ -48,15 +48,13 @@ export function ResourcesListFilters({
           label="Search"
           placeholder="Search by name"
           value={nameInput}
-          state={fieldState}
-          onChange={(event) => onNameInputChange(event.target.value)}
+          onChange={(event) => setNameInput(event.target.value)}
         />
       </SearchField>
       <Select
         label="Status"
         options={STATUS_OPTIONS}
         value={status ?? ''}
-        state={fieldState}
         onChange={(event) =>
           onChange({
             status: (event.target.value || undefined) as ResourceStatus | undefined,
@@ -68,7 +66,6 @@ export function ResourcesListFilters({
         label="Sort"
         options={SORT_OPTIONS}
         value={sortOrder}
-        state={fieldState}
         onChange={(event) =>
           onChange({ sortOrder: event.target.value as 'asc' | 'desc', page: 1 })
         }

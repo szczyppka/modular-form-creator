@@ -1,6 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { useDebouncedValue } from '@/shared/useDebouncedValue'
 import {
   buildListSearchParams,
   parseListSearchParams,
@@ -16,22 +15,6 @@ export function useResourcesListUrlState() {
   const [searchParams, setSearchParams] = useSearchParams()
   const urlState = useMemo(() => parseListSearchParams(searchParams), [searchParams])
 
-  const [nameInput, setNameInput] = useState(urlState.name)
-  const debouncedName = useDebouncedValue(nameInput)
-
-  // sync the debounced search term into the URL (and reset to page 1);
-  // functional update keeps deps minimal and avoids stale-state races
-  useEffect(() => {
-    setSearchParams(
-      (prev) => {
-        const state = parseListSearchParams(prev)
-        if (state.name === debouncedName) return prev
-        return buildListSearchParams({ ...state, name: debouncedName, page: 1 })
-      },
-      { replace: true },
-    )
-  }, [debouncedName, setSearchParams])
-
   const updateUrl = useCallback(
     (patch: Partial<ResourcesListUrlState>) => {
       setSearchParams(
@@ -45,8 +28,6 @@ export function useResourcesListUrlState() {
   return {
     urlState,
     requestParams: toListRequestParams(urlState),
-    nameInput,
-    setNameInput,
     updateUrl,
   }
 }
