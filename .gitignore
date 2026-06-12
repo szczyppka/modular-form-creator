@@ -25,3 +25,8 @@ dist-ssr
 
 *storybook.log
 storybook-static
+
+# Env files (local secrets/config) — keep .env.example committed
+.env
+.env.*
+!.env.example
