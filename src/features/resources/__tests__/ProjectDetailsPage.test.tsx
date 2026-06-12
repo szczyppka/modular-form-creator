@@ -62,6 +62,35 @@ describe('ProjectDetailsPage', () => {
     expect(screen.queryByLabelText('Project name')).not.toBeInTheDocument()
   })
 
+  it('keeps the module locked when Basic Info is only partially complete', async () => {
+    mockedGetResource.mockResolvedValue(
+      createResourceFixture({
+        basicInfo: {
+          ...draftWithCompleteBasicInfo.basicInfo,
+          priority: '',
+        },
+      }),
+    )
+
+    renderPage()
+
+    expect(
+      await screen.findByText(/unlocks after Basic Info is completed/),
+    ).toBeInTheDocument()
+    expect(screen.queryByLabelText('Project name')).not.toBeInTheDocument()
+  })
+
+  it('renders the form when Basic Info is complete', async () => {
+    mockedGetResource.mockResolvedValue(draftWithCompleteBasicInfo)
+
+    renderPage()
+
+    expect(await screen.findByLabelText('Project name')).toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: 'Complete Basic Info first' }),
+    ).not.toBeInTheDocument()
+  })
+
   it('submits the payload and navigates back to the overview', async () => {
     const user = userEvent.setup()
     mockedGetResource.mockResolvedValue(draftWithCompleteBasicInfo)
@@ -107,5 +136,8 @@ describe('ProjectDetailsPage', () => {
 
     expect(await screen.findByText(/full-update flow/)).toBeInTheDocument()
     expect(screen.queryByLabelText('Project name')).not.toBeInTheDocument()
+    expect(
+      screen.queryByRole('link', { name: 'Complete Basic Info first' }),
+    ).not.toBeInTheDocument()
   })
 })

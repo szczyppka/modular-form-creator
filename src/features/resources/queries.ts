@@ -9,6 +9,7 @@ import {
   deleteResource,
   getResource,
   listResources,
+  provisionResource,
   updateBasicInfo,
   updateProjectDetails,
 } from '@/api/resources'
@@ -74,6 +75,19 @@ export function useUpdateProjectDetails(id: ResourceId) {
 
   return useMutation({
     mutationFn: (payload: ProjectDetailsPayload) => updateProjectDetails(id, payload),
+    onSuccess: (resource) => {
+      queryClient.setQueryData(resourceKeys.detail(resource.resourceId), resource)
+      void queryClient.invalidateQueries({ queryKey: resourceKeys.lists() })
+    },
+  })
+}
+
+/** The only way a resource can move from draft to completed. */
+export function useProvisionResource(id: ResourceId) {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: () => provisionResource(id),
     onSuccess: (resource) => {
       queryClient.setQueryData(resourceKeys.detail(resource.resourceId), resource)
       void queryClient.invalidateQueries({ queryKey: resourceKeys.lists() })
