@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { routeTo } from '@/app/routes'
+import { MutedText, NavigationLink, PageLayout } from '@/app/styles'
 import { Button } from '@/design-system'
 import {
   DeleteResourceDialog,
@@ -27,16 +28,16 @@ export default function ResourcePage() {
   return (
     <ResourceGate resourceId={resourceId}>
       {(resource) => (
-        <Page>
-          <BackLink to={routeTo.resources()}>Back to resources</BackLink>
+        <PageLayout>
+          <NavigationLink to={routeTo.resources()}>Back to resources</NavigationLink>
 
           <Header>
             <Info>
-              <Title>{resource.name}</Title>
-              <Meta>
+              <h1>{resource.name}</h1>
+              <MutedText>
                 Resource #{resource.resourceId} · Created{' '}
                 {dateFormatter.format(new Date(resource.createdAt))}
-              </Meta>
+              </MutedText>
             </Info>
 
             <HeaderActions>
@@ -69,29 +70,16 @@ export default function ResourcePage() {
             onClose={() => setDeleteTarget(null)}
             onDeleted={() => navigate(routeTo.resources())}
           />
-        </Page>
+        </PageLayout>
       )}
     </ResourceGate>
   )
 }
 
-const Page = styled.section`
-  width: min(920px, 100%);
-  padding: ${({ theme }) => theme.spacing.xl};
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
-`
-
 const Info = styled.div`
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.xs};
-`
-
-const BackLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.primaryStrong};
-  width: fit-content;
 `
 
 const Header = styled.header`
@@ -102,15 +90,6 @@ const Header = styled.header`
   gap: ${({ theme }) => theme.spacing.md};
 `
 
-const Title = styled.h1`
-  margin: 0;
-`
-
-const Meta = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.colors.inkMuted};
-`
-
 const HeaderActions = styled.div`
   display: flex;
   align-items: center;
@@ -118,8 +97,6 @@ const HeaderActions = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `
 
-const DetailsLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.primaryStrong};
+const DetailsLink = styled(NavigationLink)`
   font-weight: 600;
-  width: fit-content;
 `

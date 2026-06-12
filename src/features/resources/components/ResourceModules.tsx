@@ -1,95 +1,106 @@
-import { Link } from 'react-router-dom'
 import styled from 'styled-components'
 import type { Resource } from '@/api/types'
 import { routeTo } from '@/app/routes'
-import { Badge, Card } from '@/design-system'
+import { NavigationLink } from '@/app/styles'
+import { Card } from '@/design-system'
 import {
-  getBasicInfoProgress,
-  getProjectDetailsProgress,
-  isBasicInfoComplete,
-  isProjectDetailsComplete,
+  getBasicInfoCompletion,
+  getProjectDetailsCompletion,
+  type ModuleCompletion,
 } from '../completeness'
-import { useCompletedResourceDraft } from '../useCompletedResourceDraft'
+import { applyResourceEditBuffer } from '../edit-buffer/applyResourceEditBuffer'
+import { useResourceEditBuffer } from '../edit-buffer/useResourceEditBuffer'
+import { ModuleCompletionBadge } from './ModuleCompletionBadge'
 
 interface ResourceModulesProps {
   resource: Resource
 }
 
-/**
- * Module progress with draft-aware badges: for completed resources the
- * buffered (unsaved) values take precedence so the UI reflects what the
- * user will actually submit.
- */
 export function ResourceModules({ resource }: ResourceModulesProps) {
-  const { draft } = useCompletedResourceDraft(resource.resourceId)
-  const basicInfo =
-    resource.status === 'completed' && draft?.basicInfo
-      ? draft.basicInfo
-      : resource.basicInfo
-  const projectDetails =
-    resource.status === 'completed' && draft?.projectDetails
-      ? draft.projectDetails
-      : resource.projectDetails
-  const basicInfoComplete = isBasicInfoComplete(basicInfo)
-
-  const modules = [
-    {
-      label: 'Basic Info',
-      to: routeTo.basicInfo(resource.resourceId),
-      complete: basicInfoComplete,
-      available: true,
-      progress: getBasicInfoProgress(basicInfo),
-    },
-    {
-      label: 'Project Details',
-      to: routeTo.projectDetails(resource.resourceId),
-      complete: isProjectDetailsComplete(projectDetails),
-      available: resource.status === 'completed' || basicInfoComplete,
-      progress: getProjectDetailsProgress(projectDetails),
-    },
-  ]
+  const { buffer } = useResourceEditBuffer(resource.resourceId)
+  const resourceWithChanges = applyResourceEditBuffer(resource, buffer)
+  const { basicInfo, projectDetails } = resourceWithChanges
+  const basicInfoCompletion = getBasicInfoCompletion(basicInfo)
+  const projectDetailsCompletion = getProjectDetailsCompletion(projectDetails)
+  const canEditProjectDetails =
+    resource.status === 'completed' || basicInfoCompletion.isComplete
 
   return (
     <Grid aria-label="Resource modules">
-      {modules.map((module) => {
-        const percent = Math.round((module.progress.filled / module.progress.total) * 100)
-
-        return (
-          <li key={module.label}>
-            <ModuleCard variant="outline">
-              <ModuleHeader>
-                <ModuleName>{module.label}</ModuleName>
-                <Badge variant={module.complete ? 'success' : 'neutral'}>
-                  {module.complete ? 'Complete' : 'Incomplete'}
-                </Badge>
-              </ModuleHeader>
-
-              <ProgressTrack
-                role="progressbar"
-                aria-label={`${module.label} progress`}
-                aria-valuenow={percent}
-                aria-valuemin={0}
-                aria-valuemax={100}
-              >
-                <ProgressFill $percent={percent} />
-              </ProgressTrack>
-              <ProgressLabel>
-                {module.progress.filled} of {module.progress.total} fields completed
-              </ProgressLabel>
-
-              <ModuleFooter>
-                {module.available ? (
-                  <ModuleLink to={module.to}>Edit</ModuleLink>
-                ) : (
-                  <LockedLabel>Locked</LockedLabel>
-                )}
-              </ModuleFooter>
-            </ModuleCard>
-          </li>
-        )
-      })}
+      <li>
+        <ResourceModuleCard
+          title="Basic Info"
+          editPath={routeTo.basicInfo(resource.resourceId)}
+          completion={basicInfoCompletion}
+          canEdit
+        />
+      </li>
+      <li>
+        <ResourceModuleCard
+          title="Project Details"
+          editPath={routeTo.projectDetails(resource.resourceId)}
+          completion={projectDetailsCompletion}
+          canEdit={canEditProjectDetails}
+        />
+      </li>
     </Grid>
   )
+}
+
+interface ResourceModuleCardProps {
+  title: string
+  editPath: string
+  completion: ModuleCompletion
+  canEdit: boolean
+}
+
+function ResourceModuleCard({
+  title,
+  editPath,
+  completion,
+  canEdit,
+}: ResourceModuleCardProps) {
+  return (
+    <ModuleCard variant="outline">
+      <ModuleHeader>
+        <ModuleName>{title}</ModuleName>
+        <ModuleCompletionBadge isComplete={completion.isComplete} />
+      </ModuleHeader>
+
+      <ProgressTrack
+        role="progressbar"
+        aria-label={`${title} progress`}
+        aria-valuenow={completion.percentage}
+        aria-valuemin={0}
+        aria-valuemax={100}
+      >
+        <ProgressFill
+          $percentage={completion.percentage}
+          $isComplete={completion.isComplete}
+        />
+      </ProgressTrack>
+      <ProgressLabel>
+        {completion.completedFields} of {completion.totalFields} fields completed
+      </ProgressLabel>
+
+      <ModuleFooter>
+        <ModuleAction canEdit={canEdit} editPath={editPath} />
+      </ModuleFooter>
+    </ModuleCard>
+  )
+}
+
+interface ModuleActionProps {
+  canEdit: boolean
+  editPath: string
+}
+
+function ModuleAction({ canEdit, editPath }: ModuleActionProps) {
+  if (!canEdit) {
+    return <LockedLabel>Locked</LockedLabel>
+  }
+
+  return <ModuleLink to={editPath}>Edit</ModuleLink>
 }
 
 const Grid = styled.ul`
@@ -134,12 +145,15 @@ const ProgressTrack = styled.div`
   overflow: hidden;
 `
 
-const ProgressFill = styled.div<{ $percent: number }>`
+const ProgressFill = styled.div<{
+  $percentage: number
+  $isComplete: boolean
+}>`
   height: 100%;
-  width: ${({ $percent }) => $percent}%;
+  width: ${({ $percentage }) => $percentage}%;
   border-radius: inherit;
-  background: ${({ theme, $percent }) =>
-    $percent === 100 ? theme.colors.success : theme.colors.primary};
+  background: ${({ theme, $isComplete }) =>
+    $isComplete ? theme.colors.success : theme.colors.primary};
   transition: width 0.2s ease;
 `
 
@@ -153,8 +167,7 @@ const ModuleFooter = styled.div`
   margin-top: auto;
 `
 
-const ModuleLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.primaryStrong};
+const ModuleLink = styled(NavigationLink)`
   font-weight: 600;
 `
 

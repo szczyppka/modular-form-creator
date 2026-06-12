@@ -19,3 +19,16 @@ export class ApiError extends Error {
     return this.status >= 400 && this.status < 500
   }
 }
+
+/** Backend messages are user-readable; anything else gets the caller's fallback. */
+export function getApiErrorMessage(error: unknown, fallback: string): string | undefined {
+  if (!error) {
+    return undefined
+  }
+
+  if (error instanceof ApiError) {
+    return error.message
+  }
+
+  return fallback
+}

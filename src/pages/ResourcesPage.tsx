@@ -1,4 +1,5 @@
 import styled from 'styled-components'
+import { PageLayout } from '@/app/styles'
 import { CreateResourceAction } from '@/features/resources/components/CreateResourceAction'
 import { ResourcesListContent } from '@/features/resources/components/ResourcesListContent'
 import { ResourcesListFilters } from '@/features/resources/components/ResourcesListFilters'
@@ -8,9 +9,9 @@ export default function ResourcesPage() {
   const { urlState, requestParams, updateUrl } = useResourcesListUrlState()
 
   return (
-    <Page>
+    <PageLayout>
       <Header>
-        <Title>Resources</Title>
+        <h1>Resources</h1>
         <CreateResourceAction />
       </Header>
 
@@ -25,27 +26,13 @@ export default function ResourcesPage() {
         requestParams={requestParams}
         onPageChange={(page) => updateUrl({ page })}
       />
-    </Page>
+    </PageLayout>
   )
 }
-
-const Page = styled.section`
-  width: min(920px, 100%);
-  padding: ${({ theme }) => theme.spacing.xl};
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
-`
 
 const Header = styled.header`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: ${({ theme }) => theme.spacing.md};
-`
-
-const Title = styled.h1`
-  margin: 0;
-  font-family: ${({ theme }) => theme.typography.heading};
-  color: ${({ theme }) => theme.colors.inkStrong};
 `

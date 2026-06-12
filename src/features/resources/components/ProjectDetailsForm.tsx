@@ -1,83 +1,90 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Controller, useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
-import { ApiError } from '@/api/apiError'
-import { PROJECT_CATEGORY_VALUES, TEAM_MEMBER_VALUES, type Resource } from '@/api/types'
-import { routeTo } from '@/app/routes'
+import {
+  PROJECT_CATEGORY_VALUES,
+  TEAM_MEMBER_VALUES,
+  type ProjectDetails,
+  type Resource,
+} from '@/api/types'
+import { ErrorMessage, FormActions, FormStack } from '@/app/styles'
 import { Button, CheckboxGroup, Input, Select } from '@/design-system'
+import { buildSelectOptions } from '@/shared/selectOptions'
 import {
   projectDetailsSchema,
   type ProjectDetailsFormValues,
 } from '../projectDetailsSchema'
+import { applyResourceEditBuffer } from '../edit-buffer/applyResourceEditBuffer'
+import { usePreserveFormChanges } from '../edit-buffer/usePreserveFormChanges'
+import { useResourceEditBuffer } from '../edit-buffer/useResourceEditBuffer'
 import { useUpdateProjectDetails } from '../queries'
-import { useCompletedResourceDraft } from '../useCompletedResourceDraft'
+import { useModuleFormFlow } from '../useModuleFormFlow'
 
-const CATEGORY_OPTIONS = [
-  { value: '', label: 'Select category' },
-  ...PROJECT_CATEGORY_VALUES.map((value) => ({
-    value,
-    label: value.charAt(0).toUpperCase() + value.slice(1),
-  })),
-]
-
-const TEAM_MEMBER_OPTIONS = [...TEAM_MEMBER_VALUES]
-
-function getErrorMessage(error: unknown): string | undefined {
-  if (!error) {
-    return undefined
-  }
-
-  if (error instanceof ApiError) {
-    return error.message
-  }
-
-  return 'Unable to save Project Details. Please try again.'
-}
+const CATEGORY_OPTIONS = buildSelectOptions(PROJECT_CATEGORY_VALUES, 'Select category')
+const TEAM_MEMBER_OPTIONS = Array.from(TEAM_MEMBER_VALUES)
 
 interface ProjectDetailsFormProps {
   resource: Resource
 }
 
 export function ProjectDetailsForm({ resource }: ProjectDetailsFormProps) {
-  const navigate = useNavigate()
   const updateMutation = useUpdateProjectDetails(resource.resourceId)
-  const { draft, setProjectDetails } = useCompletedResourceDraft(resource.resourceId)
-  const bufferedProjectDetails = draft?.projectDetails
+  const { buffer, setProjectDetails } = useResourceEditBuffer(resource.resourceId)
+  const resourceWithChanges = applyResourceEditBuffer(resource, buffer)
   const {
     register,
     control,
+    getValues,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<ProjectDetailsFormValues>({
     resolver: zodResolver(projectDetailsSchema),
     defaultValues: {
-      projectName:
-        bufferedProjectDetails?.projectName ?? resource.projectDetails.projectName,
-      budget: bufferedProjectDetails?.budget ?? resource.projectDetails.budget,
-      category:
-        bufferedProjectDetails?.category || resource.projectDetails.category || undefined,
-      options: bufferedProjectDetails?.options ?? resource.projectDetails.options,
+      projectName: resourceWithChanges.projectDetails.projectName,
+      budget: resourceWithChanges.projectDetails.budget,
+      category: resourceWithChanges.projectDetails.category || undefined,
+      options: resourceWithChanges.projectDetails.options,
     },
   })
   const isCompleted = resource.status === 'completed'
-  const isSubmitting = !isCompleted && updateMutation.isPending
-  const errorMessage = isCompleted ? undefined : getErrorMessage(updateMutation.error)
-
-  const onSubmit = handleSubmit((values) => {
-    if (isCompleted) {
-      setProjectDetails(resource.resourceId, values)
-      navigate(routeTo.resource(resource.resourceId))
-      return
-    }
-
-    updateMutation.mutate(values, {
-      onSuccess: () => navigate(routeTo.resource(resource.resourceId)),
-    })
+  const { isSubmitting, errorMessage, goToOverview, saveModule } = useModuleFormFlow({
+    resource,
+    mutation: updateMutation,
+    saveToBuffer: (payload) => setProjectDetails(resource.resourceId, payload),
+    saveErrorMessage: 'Unable to save Project Details. Please try again.',
   })
 
+  const markChangesSaved = usePreserveFormChanges<ProjectDetails>({
+    enabled: isCompleted,
+    isDirty,
+    getValues: () => {
+      const values = getValues()
+
+      return {
+        projectName: values.projectName ?? '',
+        budget: values.budget ?? '',
+        category: values.category ?? '',
+        options: values.options ?? [],
+      }
+    },
+    saveToBuffer: (values) => setProjectDetails(resource.resourceId, values),
+  })
+
+  const onSubmit = handleSubmit((values) => {
+    markChangesSaved()
+    saveModule(values)
+  })
+
+  let submitButtonLabel = 'Save Project Details'
+  if (isCompleted) {
+    submitButtonLabel = 'Save draft changes'
+  }
+  if (isSubmitting) {
+    submitButtonLabel = 'Saving…'
+  }
+  const cancelButtonLabel = isCompleted ? 'Back to overview' : 'Cancel'
+
   return (
-    <Form onSubmit={onSubmit} noValidate>
+    <FormStack onSubmit={onSubmit} noValidate>
       <Input
         label="Project name"
         placeholder="e.g. Onboarding Portal"
@@ -116,42 +123,20 @@ export function ProjectDetailsForm({ resource }: ProjectDetailsFormProps) {
           />
         )}
       />
-      <Actions>
+      <FormActions>
         <Button
           type="button"
           variant="secondary"
           disabled={isSubmitting}
-          onClick={() => navigate(routeTo.resource(resource.resourceId))}
+          onClick={goToOverview}
         >
-          Cancel
+          {cancelButtonLabel}
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting
-            ? 'Saving…'
-            : isCompleted
-              ? 'Save draft changes'
-              : 'Save Project Details'}
+          {submitButtonLabel}
         </Button>
-      </Actions>
+      </FormActions>
       {errorMessage ? <ErrorMessage role="alert">{errorMessage}</ErrorMessage> : null}
-    </Form>
+    </FormStack>
   )
 }
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-  max-width: 560px;
-`
-
-const Actions = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: ${({ theme }) => theme.spacing.sm};
-`
-
-const ErrorMessage = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.colors.warning};
-`

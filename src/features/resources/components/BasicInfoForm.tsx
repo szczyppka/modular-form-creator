@@ -1,60 +1,64 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
-import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
-import { ApiError } from '@/api/apiError'
-import { PRIORITY_VALUES, type Resource } from '@/api/types'
-import { routeTo } from '@/app/routes'
+import { PRIORITY_VALUES, type BasicInfo, type Resource } from '@/api/types'
+import { ErrorMessage, FormActions, FormStack } from '@/app/styles'
 import { Button, Input, Select } from '@/design-system'
+import { buildSelectOptions } from '@/shared/selectOptions'
 import { basicInfoSchema, type BasicInfoFormValues } from '../basicInfoSchema'
+import { applyResourceEditBuffer } from '../edit-buffer/applyResourceEditBuffer'
+import { usePreserveFormChanges } from '../edit-buffer/usePreserveFormChanges'
+import { useResourceEditBuffer } from '../edit-buffer/useResourceEditBuffer'
 import { useUpdateBasicInfo } from '../queries'
-import { useCompletedResourceDraft } from '../useCompletedResourceDraft'
+import { useModuleFormFlow } from '../useModuleFormFlow'
 
-const PRIORITY_OPTIONS = [
-  { value: '', label: 'Select priority' },
-  ...PRIORITY_VALUES.map((value) => ({
-    value,
-    label: value.charAt(0).toUpperCase() + value.slice(1),
-  })),
-]
-
-function getErrorMessage(error: unknown): string | undefined {
-  if (!error) {
-    return undefined
-  }
-
-  if (error instanceof ApiError) {
-    return error.message
-  }
-
-  return 'Unable to save Basic Info. Please try again.'
-}
+const PRIORITY_OPTIONS = buildSelectOptions(PRIORITY_VALUES, 'Select priority')
 
 interface BasicInfoFormProps {
   resource: Resource
 }
 
 export function BasicInfoForm({ resource }: BasicInfoFormProps) {
-  const navigate = useNavigate()
   const updateMutation = useUpdateBasicInfo(resource.resourceId)
-  const { draft, setBasicInfo } = useCompletedResourceDraft(resource.resourceId)
-  const bufferedBasicInfo = draft?.basicInfo
+  const { buffer, setBasicInfo } = useResourceEditBuffer(resource.resourceId)
+  const resourceWithChanges = applyResourceEditBuffer(resource, buffer)
   const {
     register,
+    getValues,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isDirty },
   } = useForm<BasicInfoFormValues>({
     resolver: zodResolver(basicInfoSchema),
     defaultValues: {
-      owner: bufferedBasicInfo?.owner ?? resource.basicInfo.owner,
-      email: bufferedBasicInfo?.email ?? resource.basicInfo.email,
-      description: bufferedBasicInfo?.description ?? resource.basicInfo.description,
-      priority: bufferedBasicInfo?.priority || resource.basicInfo.priority || undefined,
+      owner: resourceWithChanges.basicInfo.owner,
+      email: resourceWithChanges.basicInfo.email,
+      description: resourceWithChanges.basicInfo.description,
+      priority: resourceWithChanges.basicInfo.priority || undefined,
     },
   })
   const isCompleted = resource.status === 'completed'
-  const isSubmitting = !isCompleted && updateMutation.isPending
-  const errorMessage = isCompleted ? undefined : getErrorMessage(updateMutation.error)
+  const { isSubmitting, errorMessage, goToOverview, saveModule } = useModuleFormFlow({
+    resource,
+    mutation: updateMutation,
+    saveToBuffer: (payload) => setBasicInfo(resource.resourceId, payload),
+    saveErrorMessage: 'Unable to save Basic Info. Please try again.',
+  })
+
+  const markChangesSaved = usePreserveFormChanges<BasicInfo>({
+    enabled: isCompleted,
+    isDirty,
+    getValues: () => {
+      const values = getValues()
+
+      return {
+        resourceName: resource.basicInfo.resourceName || resource.name,
+        owner: values.owner ?? '',
+        email: values.email ?? '',
+        description: values.description ?? '',
+        priority: values.priority ?? '',
+      }
+    },
+    saveToBuffer: (values) => setBasicInfo(resource.resourceId, values),
+  })
 
   const onSubmit = handleSubmit((values) => {
     const payload = {
@@ -62,21 +66,21 @@ export function BasicInfoForm({ resource }: BasicInfoFormProps) {
       resourceName: resource.basicInfo.resourceName || resource.name,
     }
 
-    if (isCompleted) {
-      setBasicInfo(resource.resourceId, payload)
-      navigate(routeTo.resource(resource.resourceId))
-      return
-    }
-
-    updateMutation.mutate(
-      // the name is locked after creation — re-send the current value untouched
-      payload,
-      { onSuccess: () => navigate(routeTo.resource(resource.resourceId)) },
-    )
+    markChangesSaved()
+    saveModule(payload)
   })
 
+  let submitButtonLabel = 'Save Basic Info'
+  if (isCompleted) {
+    submitButtonLabel = 'Save draft changes'
+  }
+  if (isSubmitting) {
+    submitButtonLabel = 'Saving…'
+  }
+  const cancelButtonLabel = isCompleted ? 'Back to overview' : 'Cancel'
+
   return (
-    <Form onSubmit={onSubmit} noValidate>
+    <FormStack onSubmit={onSubmit} noValidate>
       <Input
         label="Owner"
         placeholder="e.g. Jane Doe"
@@ -109,42 +113,20 @@ export function BasicInfoForm({ resource }: BasicInfoFormProps) {
         disabled={isSubmitting}
         {...register('priority')}
       />
-      <Actions>
+      <FormActions>
         <Button
           type="button"
           variant="secondary"
           disabled={isSubmitting}
-          onClick={() => navigate(routeTo.resource(resource.resourceId))}
+          onClick={goToOverview}
         >
-          Cancel
+          {cancelButtonLabel}
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {isSubmitting
-            ? 'Saving…'
-            : isCompleted
-              ? 'Save draft changes'
-              : 'Save Basic Info'}
+          {submitButtonLabel}
         </Button>
-      </Actions>
+      </FormActions>
       {errorMessage ? <ErrorMessage role="alert">{errorMessage}</ErrorMessage> : null}
-    </Form>
+    </FormStack>
   )
 }
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-  max-width: 560px;
-`
-
-const Actions = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: ${({ theme }) => theme.spacing.sm};
-`
-
-const ErrorMessage = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.colors.warning};
-`

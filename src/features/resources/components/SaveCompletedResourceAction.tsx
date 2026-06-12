@@ -1,22 +1,11 @@
-import styled from 'styled-components'
-import { ApiError } from '@/api/apiError'
+import { getApiErrorMessage } from '@/api/apiError'
 import type { Resource, ResourcePayload } from '@/api/types'
+import { ErrorMessage, InlineAction, MutedText } from '@/app/styles'
 import { Button } from '@/design-system'
-import { isBasicInfoComplete, isProjectDetailsComplete } from '../completeness'
+import { hasCompleteModules } from '../completeness'
+import { applyResourceEditBuffer } from '../edit-buffer/applyResourceEditBuffer'
+import { useResourceEditBuffer } from '../edit-buffer/useResourceEditBuffer'
 import { useReplaceResource } from '../queries'
-import { useCompletedResourceDraft } from '../useCompletedResourceDraft'
-
-function getErrorMessage(error: unknown): string | undefined {
-  if (!error) {
-    return undefined
-  }
-
-  if (error instanceof ApiError) {
-    return error.message
-  }
-
-  return 'Unable to save the resource. Please try again.'
-}
 
 interface SaveCompletedResourceActionProps {
   resource: Resource
@@ -25,17 +14,16 @@ interface SaveCompletedResourceActionProps {
 export function SaveCompletedResourceAction({
   resource,
 }: SaveCompletedResourceActionProps) {
-  const { draft, clear } = useCompletedResourceDraft(resource.resourceId)
+  const { buffer, clear } = useResourceEditBuffer(resource.resourceId)
   const replaceMutation = useReplaceResource(resource.resourceId)
 
-  if (resource.status !== 'completed' || !draft) {
+  if (resource.status !== 'completed' || !buffer) {
     return null
   }
 
-  const basicInfo = draft.basicInfo ?? resource.basicInfo
-  const projectDetails = draft.projectDetails ?? resource.projectDetails
+  const resourceWithChanges = applyResourceEditBuffer(resource, buffer)
 
-  if (!isBasicInfoComplete(basicInfo) || !isProjectDetailsComplete(projectDetails)) {
+  if (!hasCompleteModules(resourceWithChanges)) {
     return (
       <ErrorMessage role="alert">
         The resource data is incomplete and cannot be saved.
@@ -44,16 +32,19 @@ export function SaveCompletedResourceAction({
   }
 
   const payload: ResourcePayload = {
-    name: resource.name,
-    basicInfo,
-    projectDetails,
+    name: resourceWithChanges.name,
+    basicInfo: resourceWithChanges.basicInfo,
+    projectDetails: resourceWithChanges.projectDetails,
   }
   const isSubmitting = replaceMutation.isPending
-  const errorMessage = getErrorMessage(replaceMutation.error)
+  const errorMessage = getApiErrorMessage(
+    replaceMutation.error,
+    'Unable to save the resource. Please try again.',
+  )
 
   return (
-    <Section>
-      <Message>Unsaved local changes</Message>
+    <InlineAction>
+      <MutedText>Unsaved local changes</MutedText>
       <Button
         type="button"
         disabled={isSubmitting}
@@ -66,23 +57,6 @@ export function SaveCompletedResourceAction({
         {isSubmitting ? 'Saving…' : 'Save pending changes'}
       </Button>
       {errorMessage ? <ErrorMessage role="alert">{errorMessage}</ErrorMessage> : null}
-    </Section>
+    </InlineAction>
   )
 }
-
-const Section = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-  flex-wrap: wrap;
-`
-
-const Message = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.colors.inkMuted};
-`
-
-const ErrorMessage = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.colors.warning};
-`

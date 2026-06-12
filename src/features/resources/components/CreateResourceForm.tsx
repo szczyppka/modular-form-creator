@@ -1,8 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
-import styled from 'styled-components'
-import { ApiError } from '@/api/apiError'
+import { ApiError, getApiErrorMessage } from '@/api/apiError'
+import { ErrorMessage, FormStack, MutedText } from '@/app/styles'
 import { routeTo } from '@/app/routes'
 import { Button, Input } from '@/design-system'
 import {
@@ -10,15 +10,6 @@ import {
   type CreateResourceFormValues,
 } from '../createResourceSchema'
 import { useCreateResource } from '../queries'
-
-/** Client errors (4xx) are field problems and surface next to the input instead. */
-function getGenericErrorMessage(error: unknown): string | undefined {
-  if (!error || (error instanceof ApiError && error.isClientError)) {
-    return undefined
-  }
-
-  return 'Unable to create the resource. Please try again.'
-}
 
 export function CreateResourceForm() {
   const navigate = useNavigate()
@@ -32,8 +23,16 @@ export function CreateResourceForm() {
     resolver: zodResolver(createResourceSchema),
     defaultValues: { resourceName: '' },
   })
+  const createError = createMutation.error
   const isSubmitting = createMutation.isPending
-  const errorMessage = getGenericErrorMessage(createMutation.error)
+  let errorMessage = getApiErrorMessage(
+    createError,
+    'Unable to create the resource. Please try again.',
+  )
+
+  if (createError instanceof ApiError && createError.isClientError) {
+    errorMessage = undefined
+  }
 
   const onSubmit = handleSubmit(({ resourceName }) => {
     createMutation.mutate(resourceName, {
@@ -50,10 +49,10 @@ export function CreateResourceForm() {
   })
 
   return (
-    <Form onSubmit={onSubmit} noValidate>
-      <Description>
+    <FormStack onSubmit={onSubmit} noValidate>
+      <MutedText>
         Start a draft resource. Its name cannot be changed after creation.
-      </Description>
+      </MutedText>
       <Input
         label="Resource name"
         placeholder="e.g. Customer onboarding"
@@ -66,20 +65,6 @@ export function CreateResourceForm() {
         {isSubmitting ? 'Creating…' : 'Create resource'}
       </Button>
       {errorMessage ? <ErrorMessage role="alert">{errorMessage}</ErrorMessage> : null}
-    </Form>
+    </FormStack>
   )
 }
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.md};
-`
-
-const Description = styled.p`
-  color: ${({ theme }) => theme.colors.inkMuted};
-`
-
-const ErrorMessage = styled.p`
-  color: ${({ theme }) => theme.colors.warning};
-`

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import styled from 'styled-components'
 import { ApiError } from '@/api/apiError'
 import type { ListResourcesParams } from '@/api/types'
+import { MutedText } from '@/app/styles'
 import { Button } from '@/design-system'
 import { useResourcesList } from '../queries'
 import { DeleteResourceDialog, type DeleteTarget } from './DeleteResourceDialog'
@@ -13,7 +14,6 @@ interface ResourcesListContentProps {
   onPageChange: (page: number) => void
 }
 
-/** Owns the list query and renders exactly one state: loading, error, empty, or items. */
 export function ResourcesListContent({
   requestParams,
   onPageChange,
@@ -21,28 +21,25 @@ export function ResourcesListContent({
   const { data, isPending, isError, error, isPlaceholderData, refetch } =
     useResourcesList(requestParams)
 
-  // one shared confirmation dialog for the whole list — cards stay stateless;
-  // the setter is passed to memoized cards directly: useState setters are
-  // referentially stable by React's guarantee, no useCallback needed
   const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
 
   if (isPending) {
-    return <StateMessage>Loading resources…</StateMessage>
+    return <MutedText>Loading resources…</MutedText>
   }
 
   if (isError) {
     return (
-      <StateMessage role="alert">
+      <MutedText role="alert">
         {error instanceof ApiError ? error.message : 'Something went wrong.'}{' '}
         <Button variant="secondary" size="small" onClick={() => refetch()}>
           Try again
         </Button>
-      </StateMessage>
+      </MutedText>
     )
   }
 
   if (!data || data.items.length === 0) {
-    return <StateMessage>No resources.</StateMessage>
+    return <MutedText>No resources.</MutedText>
   }
 
   return (
@@ -69,9 +66,4 @@ const List = styled.ul<{ $dimmed: boolean }>`
   gap: ${({ theme }) => theme.spacing.sm};
   opacity: ${({ $dimmed }) => ($dimmed ? 0.6 : 1)};
   transition: opacity 0.15s ease;
-`
-
-const StateMessage = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.colors.inkMuted};
 `

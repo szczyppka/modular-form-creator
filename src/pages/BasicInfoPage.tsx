@@ -1,6 +1,6 @@
-import { Link, useParams } from 'react-router-dom'
-import styled from 'styled-components'
+import { useParams } from 'react-router-dom'
 import { routeTo } from '@/app/routes'
+import { MutedText, NavigationLink, PageLayout } from '@/app/styles'
 import { BasicInfoForm } from '@/features/resources/components/BasicInfoForm'
 import { ResourceGate } from '@/features/resources/components/ResourceGate'
 
@@ -10,46 +10,21 @@ export default function BasicInfoPage() {
   return (
     <ResourceGate resourceId={resourceId}>
       {(resource) => (
-        <Page>
-          <BackLink to={routeTo.resource(resource.resourceId)}>Back to overview</BackLink>
-          <Title>Basic Info</Title>
-          <Meta>{resource.name}</Meta>
+        <PageLayout>
+          <NavigationLink to={routeTo.resource(resource.resourceId)}>
+            Back to overview
+          </NavigationLink>
+          <h1>Basic Info</h1>
+          <MutedText>{resource.name}</MutedText>
 
           {resource.status === 'completed' ? (
-            <StateMessage>
+            <MutedText>
               Changes are kept locally until you submit them from the overview.
-            </StateMessage>
+            </MutedText>
           ) : null}
           <BasicInfoForm resource={resource} />
-        </Page>
+        </PageLayout>
       )}
     </ResourceGate>
   )
 }
-
-const Page = styled.section`
-  width: min(920px, 100%);
-  padding: ${({ theme }) => theme.spacing.xl};
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
-`
-
-const BackLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.primaryStrong};
-  width: fit-content;
-`
-
-const Title = styled.h1`
-  margin: 0;
-`
-
-const Meta = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.colors.inkMuted};
-`
-
-const StateMessage = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.colors.inkMuted};
-`

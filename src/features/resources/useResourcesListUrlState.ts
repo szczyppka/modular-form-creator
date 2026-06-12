@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import {
   buildListSearchParams,
@@ -8,12 +8,11 @@ import {
 } from './listSearchParams'
 
 /**
- * Owns the list URL state: parsing, the debounced search input,
- * and write-backs. Pages consume state and callbacks — no effects of their own.
+ * Owns parsing and updates for the resources list URL state.
  */
 export function useResourcesListUrlState() {
   const [searchParams, setSearchParams] = useSearchParams()
-  const urlState = useMemo(() => parseListSearchParams(searchParams), [searchParams])
+  const urlState = parseListSearchParams(searchParams)
 
   const updateUrl = useCallback(
     (patch: Partial<ResourcesListUrlState>) => {

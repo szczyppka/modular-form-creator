@@ -3,39 +3,53 @@ import type {
   BasicInfoPayload,
   ProjectDetails,
   ProjectDetailsPayload,
+  Resource,
 } from '@/api/types'
 
-/**
- * Module completeness rules mirrored from the backend (resource.service.ts).
- * They drive the Project Details gating and the provisioning availability.
- */
 export function isBasicInfoComplete(basicInfo: BasicInfo): basicInfo is BasicInfoPayload {
-  return Boolean(
-    basicInfo.resourceName &&
-    basicInfo.owner &&
-    basicInfo.email &&
-    basicInfo.description &&
-    basicInfo.priority,
-  )
+  return getBasicInfoCompletion(basicInfo).isComplete
 }
 
 export function isProjectDetailsComplete(
   projectDetails: ProjectDetails,
 ): projectDetails is ProjectDetailsPayload {
-  return Boolean(
-    projectDetails.projectName &&
-    projectDetails.budget &&
-    projectDetails.category &&
-    projectDetails.options.length > 0,
+  return getProjectDetailsCompletion(projectDetails).isComplete
+}
+
+type ResourceWithCompleteModules = Resource & {
+  basicInfo: BasicInfoPayload
+  projectDetails: ProjectDetailsPayload
+}
+
+export function hasCompleteModules(
+  resource: Resource,
+): resource is ResourceWithCompleteModules {
+  return (
+    isBasicInfoComplete(resource.basicInfo) &&
+    isProjectDetailsComplete(resource.projectDetails)
   )
 }
 
-export interface ModuleProgress {
-  filled: number
-  total: number
+export interface ModuleCompletion {
+  completedFields: number
+  totalFields: number
+  percentage: number
+  isComplete: boolean
 }
 
-export function getBasicInfoProgress(basicInfo: BasicInfo): ModuleProgress {
+function getModuleCompletion(fields: readonly unknown[]): ModuleCompletion {
+  const completedFields = fields.filter(Boolean).length
+  const totalFields = fields.length
+
+  return {
+    completedFields,
+    totalFields,
+    percentage: Math.round((completedFields / totalFields) * 100),
+    isComplete: completedFields === totalFields,
+  }
+}
+
+export function getBasicInfoCompletion(basicInfo: BasicInfo): ModuleCompletion {
   const fields = [
     basicInfo.resourceName,
     basicInfo.owner,
@@ -44,12 +58,12 @@ export function getBasicInfoProgress(basicInfo: BasicInfo): ModuleProgress {
     basicInfo.priority,
   ]
 
-  return { filled: fields.filter(Boolean).length, total: fields.length }
+  return getModuleCompletion(fields)
 }
 
-export function getProjectDetailsProgress(
+export function getProjectDetailsCompletion(
   projectDetails: ProjectDetails,
-): ModuleProgress {
+): ModuleCompletion {
   const fields = [
     projectDetails.projectName,
     projectDetails.budget,
@@ -57,5 +71,5 @@ export function getProjectDetailsProgress(
     projectDetails.options.length > 0,
   ]
 
-  return { filled: fields.filter(Boolean).length, total: fields.length }
+  return getModuleCompletion(fields)
 }

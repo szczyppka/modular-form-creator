@@ -6,16 +6,17 @@ import App from './App'
 import { queryClient } from './app/queryClient'
 import { GlobalStyles } from './design-system/theme/GlobalStyles'
 import { theme } from './design-system/theme/theme'
-import { CompletedResourceDraftProvider } from './features/resources/components/CompletedResourceDraftProvider'
+import { ResourceEditBufferProvider } from './features/resources/edit-buffer/ResourceEditBufferProvider'
+import './App.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
         <GlobalStyles />
-        <CompletedResourceDraftProvider>
+        <ResourceEditBufferProvider>
           <App />
-        </CompletedResourceDraftProvider>
+        </ResourceEditBufferProvider>
       </ThemeProvider>
     </QueryClientProvider>
   </StrictMode>,

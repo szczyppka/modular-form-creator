@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import styled from 'styled-components'
 import type { Resource } from '@/api/types'
 import { routeTo } from '@/app/routes'
-import { Button, Card } from '@/design-system'
+import { Card, IconButton } from '@/design-system'
 import type { DeleteTarget } from './DeleteResourceDialog'
 import { ResourceStatusBadge } from './ResourceStatusBadge'
 
@@ -12,12 +12,6 @@ interface ResourceCardProps {
   onDeleteRequest: (target: DeleteTarget) => void
 }
 
-/**
- * Memoized list item. Re-renders only when its `resource` reference changes:
- * TanStack Query's structural sharing keeps unchanged resources stable across
- * refetches, and the delete flow lives outside the card (shared dialog), so
- * the card itself is stateless.
- */
 export const ResourceCard = memo(function ResourceCard({
   resource,
   onDeleteRequest,
@@ -36,15 +30,25 @@ export const ResourceCard = memo(function ResourceCard({
 
         <Actions>
           {isCompleted ? (
-            <ActionLink to={routeTo.resourceDetails(resource.resourceId)}>
-              View summary
-            </ActionLink>
+            <IconLink
+              to={routeTo.resourceDetails(resource.resourceId)}
+              aria-label="View summary"
+              title="View summary"
+            >
+              <span aria-hidden="true">📄</span>
+            </IconLink>
           ) : (
-            <ActionLink to={routeTo.resource(resource.resourceId)}>Edit</ActionLink>
+            <IconLink
+              to={routeTo.resource(resource.resourceId)}
+              aria-label="Edit"
+              title="Edit"
+            >
+              <span aria-hidden="true">✏️</span>
+            </IconLink>
           )}
-          <Button
+          <IconButton
             type="button"
-            variant="secondary"
+            variant="ghost"
             size="small"
             onClick={() =>
               onDeleteRequest({
@@ -53,9 +57,10 @@ export const ResourceCard = memo(function ResourceCard({
               })
             }
             aria-label={`Delete ${resource.name}`}
+            title="Delete"
           >
-            Delete
-          </Button>
+            <span aria-hidden="true">🗑️</span>
+          </IconButton>
         </Actions>
       </CardBody>
     </Card>
@@ -97,17 +102,21 @@ const ResourceInfo = styled.div`
 const Actions = styled.div`
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.sm};
 `
 
-const ActionLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.primaryStrong};
-  font-weight: 600;
+const IconLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: ${({ theme }) => theme.radii.sm};
   text-decoration: none;
+  font-size: 1rem;
 
   &:hover {
-    text-decoration: underline;
+    background: ${({ theme }) => theme.colors.surfaceAlt};
   }
 
   &:focus-visible {

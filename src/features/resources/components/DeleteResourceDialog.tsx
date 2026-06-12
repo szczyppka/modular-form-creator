@@ -1,9 +1,10 @@
 import styled from 'styled-components'
-import { ApiError } from '@/api/apiError'
+import { getApiErrorMessage } from '@/api/apiError'
 import type { ResourceId } from '@/api/types'
+import { ErrorMessage, FormActions } from '@/app/styles'
 import { Button, Drawer } from '@/design-system'
+import { useResourceEditBuffer } from '../edit-buffer/useResourceEditBuffer'
 import { useDeleteResource } from '../queries'
-import { useCompletedResourceDraft } from '../useCompletedResourceDraft'
 
 /** Minimal data the confirmation needs — callers don't pass whole resources around. */
 export interface DeleteTarget {
@@ -18,18 +19,6 @@ interface DeleteResourceDialogProps {
   onDeleted?: () => void
 }
 
-function getErrorMessage(error: unknown): string | undefined {
-  if (!error) {
-    return undefined
-  }
-
-  if (error instanceof ApiError) {
-    return error.message
-  }
-
-  return 'Unable to delete the resource. Please try again.'
-}
-
 /**
  * Single shared confirmation dialog. List views render one instance for all
  * rows instead of mounting a drawer per card.
@@ -39,14 +28,17 @@ export function DeleteResourceDialog({
   onClose,
   onDeleted,
 }: DeleteResourceDialogProps) {
-  const { clear } = useCompletedResourceDraft(target?.resourceId ?? '')
+  const { clear } = useResourceEditBuffer(target?.resourceId ?? '')
   const {
     mutate: deleteResource,
     reset: resetMutation,
     error,
     isPending: isDeleting,
   } = useDeleteResource()
-  const errorMessage = getErrorMessage(error)
+  const errorMessage = getApiErrorMessage(
+    error,
+    'Unable to delete the resource. Please try again.',
+  )
 
   const close = () => {
     if (isDeleting) return
@@ -75,7 +67,7 @@ export function DeleteResourceDialog({
             undone.
           </ConfirmationCopy>
           {errorMessage ? <ErrorMessage role="alert">{errorMessage}</ErrorMessage> : null}
-          <Actions>
+          <FormActions>
             <Button
               type="button"
               variant="secondary"
@@ -87,7 +79,7 @@ export function DeleteResourceDialog({
             <Button type="button" onClick={confirmDelete} disabled={isDeleting}>
               {isDeleting ? 'Deleting…' : 'Delete resource'}
             </Button>
-          </Actions>
+          </FormActions>
         </>
       ) : null}
     </Drawer>
@@ -97,14 +89,4 @@ export function DeleteResourceDialog({
 const ConfirmationCopy = styled.p`
   line-height: 1.5;
   color: ${({ theme }) => theme.colors.ink};
-`
-
-const ErrorMessage = styled.p`
-  color: ${({ theme }) => theme.colors.warning};
-`
-
-const Actions = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: ${({ theme }) => theme.spacing.sm};
 `

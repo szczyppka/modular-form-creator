@@ -1,6 +1,7 @@
-import { Link, useParams } from 'react-router-dom'
+import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { routeTo } from '@/app/routes'
+import { MutedText, NavigationLink, PageLayout } from '@/app/styles'
 import { ProjectDetailsForm } from '@/features/resources/components/ProjectDetailsForm'
 import { ResourceGate } from '@/features/resources/components/ResourceGate'
 import { isBasicInfoComplete } from '@/features/resources/completeness'
@@ -13,67 +14,39 @@ export default function ProjectDetailsPage() {
       {(resource) => {
         const isCompleted = resource.status === 'completed'
         const isLocked = !isCompleted && !isBasicInfoComplete(resource.basicInfo)
-        const canEdit = !isCompleted && !isLocked
 
         return (
-          <Page>
-            <BackLink to={routeTo.resource(resource.resourceId)}>
+          <PageLayout>
+            <NavigationLink to={routeTo.resource(resource.resourceId)}>
               Back to overview
-            </BackLink>
-            <Title>Project Details</Title>
-            <Meta>{resource.name}</Meta>
+            </NavigationLink>
+            <h1>Project Details</h1>
+            <MutedText>{resource.name}</MutedText>
 
             {isCompleted ? (
-              <StateMessage>
+              <MutedText>
                 Changes are kept locally until you submit them from the overview.
-              </StateMessage>
+              </MutedText>
             ) : null}
 
             {isLocked ? (
               <LockedState>
-                <StateMessage>
+                <MutedText>
                   Project Details unlocks after Basic Info is completed.
-                </StateMessage>
+                </MutedText>
                 <BasicInfoLink to={routeTo.basicInfo(resource.resourceId)}>
                   Complete Basic Info first
                 </BasicInfoLink>
               </LockedState>
             ) : null}
 
-            {canEdit || isCompleted ? <ProjectDetailsForm resource={resource} /> : null}
-          </Page>
+            {!isLocked ? <ProjectDetailsForm resource={resource} /> : null}
+          </PageLayout>
         )
       }}
     </ResourceGate>
   )
 }
-
-const Page = styled.section`
-  width: min(920px, 100%);
-  padding: ${({ theme }) => theme.spacing.xl};
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
-`
-
-const BackLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.primaryStrong};
-  width: fit-content;
-`
-
-const Title = styled.h1`
-  margin: 0;
-`
-
-const Meta = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.colors.inkMuted};
-`
-
-const StateMessage = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.colors.inkMuted};
-`
 
 const LockedState = styled.div`
   display: flex;
@@ -82,7 +55,6 @@ const LockedState = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
 `
 
-const BasicInfoLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.primaryStrong};
+const BasicInfoLink = styled(NavigationLink)`
   font-weight: 600;
 `
