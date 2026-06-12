@@ -4,8 +4,13 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query'
-import { createResource, listResources } from '@/api/resources'
-import type { ListResourcesParams } from '@/api/types'
+import {
+  createResource,
+  deleteResource,
+  getResource,
+  listResources,
+} from '@/api/resources'
+import type { ListResourcesParams, ResourceId } from '@/api/types'
 
 /** Hierarchical query keys — invalidating `all` covers every resource query. */
 export const resourceKeys = {
@@ -25,6 +30,14 @@ export function useResourcesList(params: ListResourcesParams) {
   })
 }
 
+export function useResource(id: ResourceId) {
+  return useQuery({
+    queryKey: resourceKeys.detail(id),
+    queryFn: ({ signal }) => getResource(id, signal),
+    enabled: String(id).length > 0,
+  })
+}
+
 export function useCreateResource() {
   const queryClient = useQueryClient()
 
@@ -32,6 +45,18 @@ export function useCreateResource() {
     mutationFn: createResource,
     onSuccess: (resource) => {
       queryClient.setQueryData(resourceKeys.detail(resource.resourceId), resource)
+      void queryClient.invalidateQueries({ queryKey: resourceKeys.lists() })
+    },
+  })
+}
+
+export function useDeleteResource() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: deleteResource,
+    onSuccess: (_, id) => {
+      queryClient.removeQueries({ queryKey: resourceKeys.detail(id) })
       void queryClient.invalidateQueries({ queryKey: resourceKeys.lists() })
     },
   })

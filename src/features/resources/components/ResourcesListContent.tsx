@@ -1,8 +1,10 @@
+import { useState } from 'react'
 import styled from 'styled-components'
 import { ApiError } from '@/api/apiError'
 import type { ListResourcesParams } from '@/api/types'
 import { Button } from '@/design-system'
 import { useResourcesList } from '../queries'
+import { DeleteResourceDialog, type DeleteTarget } from './DeleteResourceDialog'
 import { ListPagination } from './ListPagination'
 import { ResourceCard } from './ResourceCard'
 
@@ -18,6 +20,11 @@ export function ResourcesListContent({
 }: ResourcesListContentProps) {
   const { data, isPending, isError, error, isPlaceholderData, refetch } =
     useResourcesList(requestParams)
+
+  // one shared confirmation dialog for the whole list — cards stay stateless;
+  // the setter is passed to memoized cards directly: useState setters are
+  // referentially stable by React's guarantee, no useCallback needed
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null)
 
   if (isPending) {
     return <StateMessage>Loading resources…</StateMessage>
@@ -43,11 +50,12 @@ export function ResourcesListContent({
       <List $dimmed={isPlaceholderData}>
         {data.items.map((resource) => (
           <li key={resource._id}>
-            <ResourceCard resource={resource} />
+            <ResourceCard resource={resource} onDeleteRequest={setDeleteTarget} />
           </li>
         ))}
       </List>
       <ListPagination pagination={data.pagination} onPageChange={onPageChange} />
+      <DeleteResourceDialog target={deleteTarget} onClose={() => setDeleteTarget(null)} />
     </>
   )
 }
