@@ -5,7 +5,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getResource, updateBasicInfo } from '@/api/resources'
 import BasicInfoPage from '@/pages/BasicInfoPage'
 import ResourceDetailsPage from '@/pages/ResourceDetailsPage'
-import ResourceOverviewPage from '@/pages/ResourceOverviewPage'
+import ResourcePage from '@/pages/ResourcePage'
 import { renderWithProviders } from '@/test/renderWithProviders'
 import { createResourceFixture } from './resourceTestFixture'
 
@@ -38,7 +38,7 @@ const completedResource = createResourceFixture({
 function renderPage(initialEntry = `/resources/${completedResource.resourceId}/details`) {
   return renderWithProviders(
     <Routes>
-      <Route path="/resources/:resourceId" element={<ResourceOverviewPage />} />
+      <Route path="/resources/:resourceId" element={<ResourcePage />} />
       <Route path="/resources/:resourceId/details" element={<ResourceDetailsPage />} />
       <Route path="/resources/:resourceId/basic-info" element={<BasicInfoPage />} />
     </Routes>,
@@ -60,7 +60,7 @@ describe('ResourceDetailsPage', () => {
     expect(
       await screen.findByRole('heading', { name: 'Resource details' }),
     ).toBeInTheDocument()
-    expect(screen.getByText(completedResource.name)).toBeInTheDocument()
+    expect(screen.getAllByText(completedResource.name)).toHaveLength(2)
     expect(screen.getByText('Completed')).toBeInTheDocument()
     expect(screen.getByText('Jane Doe')).toBeInTheDocument()
     expect(screen.getByText('Onboarding Portal')).toBeInTheDocument()
@@ -68,14 +68,18 @@ describe('ResourceDetailsPage', () => {
     expect(screen.getAllByText('Complete')).toHaveLength(2)
   })
 
-  it('shows fallback values for incomplete module fields', async () => {
+  it('redirects an unfinished draft back to the overview', async () => {
     vi.mocked(getResource).mockResolvedValue(createResourceFixture())
 
     renderPage('/resources/7/details')
 
-    expect(await screen.findByText('Draft')).toBeInTheDocument()
-    expect(screen.getAllByText('Not provided').length).toBeGreaterThan(0)
-    expect(screen.getAllByText('Incomplete')).toHaveLength(2)
+    // the summary route is guarded — direct URL entry lands on the overview
+    expect(
+      await screen.findByRole('link', { name: 'Back to resources' }),
+    ).toBeInTheDocument()
+    expect(
+      screen.queryByRole('heading', { name: 'Resource details' }),
+    ).not.toBeInTheDocument()
   })
 
   it('reflects buffered completed-resource edits in the summary', async () => {
@@ -88,6 +92,7 @@ describe('ResourceDetailsPage', () => {
     await user.clear(ownerInput)
     await user.type(ownerInput, 'John Smith')
     await user.click(screen.getByRole('button', { name: 'Save draft changes' }))
+    expect(await screen.findByText('Unsaved local changes')).toBeInTheDocument()
     await user.click(screen.getByRole('link', { name: 'View summary' }))
 
     expect(await screen.findByText('Unsaved local changes')).toBeInTheDocument()

@@ -1,9 +1,12 @@
-import { Link, useParams } from 'react-router-dom'
+import { Link, Navigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import type { Resource } from '@/api/types'
 import { routeTo } from '@/app/routes'
 import { Badge, Card } from '@/design-system'
-import { isBasicInfoComplete, isProjectDetailsComplete } from '@/features/resources/completeness'
+import {
+  isBasicInfoComplete,
+  isProjectDetailsComplete,
+} from '@/features/resources/completeness'
 import { ResourceGate } from '@/features/resources/components/ResourceGate'
 import { ResourceStatusBadge } from '@/features/resources/components/ResourceStatusBadge'
 import { useCompletedResourceDraft } from '@/features/resources/useCompletedResourceDraft'
@@ -24,6 +27,19 @@ interface ResourceDetailsContentProps {
 
 function ResourceDetailsContent({ resource }: ResourceDetailsContentProps) {
   const { draft } = useCompletedResourceDraft(resource.resourceId)
+
+  // The summary is reachable only once both modules are complete — direct URL
+  // entry on an unfinished draft goes back to the overview (also guards
+  // against deep links shared too early).
+  const isSummaryAvailable =
+    resource.status === 'completed' ||
+    (isBasicInfoComplete(resource.basicInfo) &&
+      isProjectDetailsComplete(resource.projectDetails))
+
+  if (!isSummaryAvailable) {
+    return <Navigate to={routeTo.resource(resource.resourceId)} replace />
+  }
+
   const basicInfo =
     resource.status === 'completed' && draft?.basicInfo
       ? draft.basicInfo
@@ -31,9 +47,9 @@ function ResourceDetailsContent({ resource }: ResourceDetailsContentProps) {
   const projectDetails =
     resource.status === 'completed' && draft?.projectDetails
       ? draft.projectDetails
-      : resource.projectDetails;
-  const isBasicComplete = isBasicInfoComplete(basicInfo);
-  const isProjectComplete = isProjectDetailsComplete(projectDetails);
+      : resource.projectDetails
+  const isBasicComplete = isBasicInfoComplete(basicInfo)
+  const isProjectComplete = isProjectDetailsComplete(projectDetails)
 
   return (
     <Page>
@@ -52,7 +68,7 @@ function ResourceDetailsContent({ resource }: ResourceDetailsContentProps) {
         </HeaderMeta>
       </Header>
 
-      <SummaryGrid>
+      <SummaryContainer>
         <Card variant="outline">
           <Section>
             <SectionHeader>
@@ -90,7 +106,7 @@ function ResourceDetailsContent({ resource }: ResourceDetailsContentProps) {
           <Section>
             <SectionHeader>
               <SectionTitle>Project Details</SectionTitle>
-              <Badge variant={isProjectComplete ? 'success' : 'neutral'} >
+              <Badge variant={isProjectComplete ? 'success' : 'neutral'}>
                 {isProjectComplete ? 'Complete' : 'Incomplete'}
               </Badge>
             </SectionHeader>
@@ -118,7 +134,7 @@ function ResourceDetailsContent({ resource }: ResourceDetailsContentProps) {
             </DetailsList>
           </Section>
         </Card>
-      </SummaryGrid>
+      </SummaryContainer>
     </Page>
   )
 }
@@ -160,9 +176,14 @@ const Meta = styled.p`
   color: ${({ theme }) => theme.colors.inkMuted};
 `
 
-const SummaryGrid = styled.div`
-  display: grid;
+const SummaryContainer = styled.div`
+  display: flex;
+  flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+  }
 `
 
 const Section = styled.section`
