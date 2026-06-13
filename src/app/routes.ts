@@ -1,6 +1,5 @@
 import type { ResourceId } from '@/api/types'
 
-/** Single source of truth for route paths - definitions and navigation builders. */
 export const routePaths = {
   root: '/',
   resources: '/resources',
@@ -10,10 +9,14 @@ export const routePaths = {
   projectDetails: '/resources/:resourceId/project-details',
 } as const
 
+function resourceRoute(id: ResourceId): string {
+  return `/resources/${encodeURIComponent(String(id))}`
+}
+
 export const routeTo = {
   resources: () => routePaths.resources,
-  resource: (id: ResourceId) => `/resources/${id}`,
-  resourceDetails: (id: ResourceId) => `/resources/${id}/details`,
-  basicInfo: (id: ResourceId) => `/resources/${id}/basic-info`,
-  projectDetails: (id: ResourceId) => `/resources/${id}/project-details`,
+  resource: resourceRoute,
+  resourceDetails: (id: ResourceId) => `${resourceRoute(id)}/details`,
+  basicInfo: (id: ResourceId) => `${resourceRoute(id)}/basic-info`,
+  projectDetails: (id: ResourceId) => `${resourceRoute(id)}/project-details`,
 } as const

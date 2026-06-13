@@ -10,6 +10,10 @@ import type {
   ResourcePayload,
 } from './types'
 
+function resourceEndpoint(id: ResourceId): string {
+  return `/resources/${encodeURIComponent(String(id))}`
+}
+
 export async function listResources(
   params: ListResourcesParams = {},
   signal?: AbortSignal,
@@ -25,7 +29,7 @@ export async function getResource(
   id: ResourceId,
   signal?: AbortSignal,
 ): Promise<Resource> {
-  const { data } = await apiClient.get<Resource>(`/resources/${id}`, { signal })
+  const { data } = await apiClient.get<Resource>(resourceEndpoint(id), { signal })
   return data
 }
 
@@ -39,7 +43,10 @@ export async function updateBasicInfo(
   id: ResourceId,
   payload: BasicInfoPayload,
 ): Promise<Resource> {
-  const { data } = await apiClient.patch<Resource>(`/resources/${id}/basic-info`, payload)
+  const { data } = await apiClient.patch<Resource>(
+    `${resourceEndpoint(id)}/basic-info`,
+    payload,
+  )
   return data
 }
 
@@ -49,7 +56,7 @@ export async function updateProjectDetails(
   payload: ProjectDetailsPayload,
 ): Promise<Resource> {
   const { data } = await apiClient.patch<Resource>(
-    `/resources/${id}/project-details`,
+    `${resourceEndpoint(id)}/project-details`,
     payload,
   )
   return data
@@ -63,7 +70,7 @@ export async function provisionResource(
   id: ResourceId,
 ): Promise<ProvisionResourceResponse> {
   const { data } = await apiClient.patch<ProvisionResourceResponse>(
-    `/resources/${id}/provisioning`,
+    `${resourceEndpoint(id)}/provisioning`,
   )
   return data
 }
@@ -73,11 +80,11 @@ export async function replaceResource(
   id: ResourceId,
   payload: ResourcePayload,
 ): Promise<Resource> {
-  const { data } = await apiClient.put<Resource>(`/resources/${id}`, payload)
+  const { data } = await apiClient.put<Resource>(resourceEndpoint(id), payload)
   return data
 }
 
 export async function deleteResource(id: ResourceId): Promise<Resource> {
-  const { data } = await apiClient.delete<Resource>(`/resources/${id}`)
+  const { data } = await apiClient.delete<Resource>(resourceEndpoint(id))
   return data
 }
