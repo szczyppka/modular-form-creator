@@ -21,7 +21,11 @@ interface BasicInfoFormProps {
 
 export function BasicInfoForm({ resource }: BasicInfoFormProps) {
   const updateMutation = useUpdateBasicInfo(resource.resourceId)
-  const { resource: resourceWithChanges, setBasicInfo } = useBufferedResource(resource)
+  const {
+    resource: resourceWithChanges,
+    setBasicInfo,
+    clearModule,
+  } = useBufferedResource(resource)
   const resourceName = resource.basicInfo.resourceName || resource.name
   const {
     register,
@@ -38,7 +42,6 @@ export function BasicInfoForm({ resource }: BasicInfoFormProps) {
     },
   })
   const {
-    isCompleted,
     isSubmitting,
     errorMessage,
     goToOverview,
@@ -49,12 +52,12 @@ export function BasicInfoForm({ resource }: BasicInfoFormProps) {
     resource,
     mutation: updateMutation,
     saveToBuffer: (payload) => setBasicInfo(resource.resourceId, payload),
+    clearBuffer: () => clearModule(resource.resourceId, 'basicInfo'),
     saveLabel: 'Save Basic Info',
     saveErrorMessage: 'Unable to save Basic Info. Please try again.',
   })
 
   const markChangesSaved = usePreserveFormChanges<BasicInfo>({
-    enabled: isCompleted,
     isDirty,
     getValues: () => {
       const values = getValues()

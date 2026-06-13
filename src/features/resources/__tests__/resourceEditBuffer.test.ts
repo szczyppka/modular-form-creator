@@ -26,17 +26,21 @@ describe('applyResourceEditBuffer', () => {
     expect(resourceWithChanges.projectDetails).toBe(completedResource.projectDetails)
   })
 
-  it('ignores temporary changes for drafts and absent buffers', () => {
+  it('applies temporary changes to drafts as well', () => {
     const draftResource = createResourceFixture()
 
-    expect(
-      applyResourceEditBuffer(draftResource, {
-        basicInfo: {
-          ...completedResource.basicInfo,
-          owner: 'Temporary owner',
-        },
-      }),
-    ).toBe(draftResource)
+    const resourceWithChanges = applyResourceEditBuffer(draftResource, {
+      basicInfo: {
+        ...completedResource.basicInfo,
+        owner: 'Temporary owner',
+      },
+    })
+
+    expect(resourceWithChanges.basicInfo.owner).toBe('Temporary owner')
+    expect(resourceWithChanges.projectDetails).toBe(draftResource.projectDetails)
+  })
+
+  it('returns the same resource when the buffer is absent', () => {
     expect(applyResourceEditBuffer(completedResource, undefined)).toBe(completedResource)
   })
 })

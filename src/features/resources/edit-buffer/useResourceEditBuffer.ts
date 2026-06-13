@@ -15,6 +15,7 @@ export function useResourceEditBuffer(id: ResourceId) {
     buffer: context.buffers[String(id)],
     setBasicInfo: context.setBasicInfo,
     setProjectDetails: context.setProjectDetails,
+    clearModule: context.clearModule,
     clear: context.clear,
   }
 }

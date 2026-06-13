@@ -6,10 +6,15 @@ export interface ResourceEditBuffer {
   projectDetails?: ProjectDetails
 }
 
+/** The buffered modules — also the keys cleared individually on draft submit. */
+export type ResourceModule = keyof ResourceEditBuffer
+
 export interface ResourceEditBufferContextValue {
   buffers: Record<string, ResourceEditBuffer>
   setBasicInfo: (id: ResourceId, basicInfo: BasicInfo) => void
   setProjectDetails: (id: ResourceId, projectDetails: ProjectDetails) => void
+  /** Drops one module's buffered edits (used once a draft module is persisted). */
+  clearModule: (id: ResourceId, module: ResourceModule) => void
   clear: (id: ResourceId) => void
 }
 

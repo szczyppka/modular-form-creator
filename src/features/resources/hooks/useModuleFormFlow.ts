@@ -8,6 +8,8 @@ interface ModuleFormFlowOptions<TPayload> {
   resource: Resource
   mutation: UseMutationResult<Resource, Error, TPayload>
   saveToBuffer: (payload: TPayload) => void
+  /** Drops this module's local buffer once a draft submit persists it. */
+  clearBuffer: () => void
   saveLabel: string
   saveErrorMessage: string
 }
@@ -32,6 +34,7 @@ export function useModuleFormFlow<TPayload>({
   resource,
   mutation,
   saveToBuffer,
+  clearBuffer,
   saveLabel,
   saveErrorMessage,
 }: ModuleFormFlowOptions<TPayload>) {
@@ -44,13 +47,21 @@ export function useModuleFormFlow<TPayload>({
   }
 
   const saveModule = (payload: TPayload) => {
+    // Completed resources can't PATCH per module — buffer locally and let the
+    // overview persist everything via a single PUT.
     if (isCompleted) {
       saveToBuffer(payload)
       goToOverview()
       return
     }
 
-    mutation.mutate(payload, { onSuccess: goToOverview })
+    // Drafts persist immediately; once saved, the local buffer is redundant.
+    mutation.mutate(payload, {
+      onSuccess: () => {
+        clearBuffer()
+        goToOverview()
+      },
+    })
   }
 
   return {
@@ -62,6 +73,6 @@ export function useModuleFormFlow<TPayload>({
     goToOverview,
     saveModule,
     submitLabel: resolveSubmitLabel(saveLabel, isCompleted, isSubmitting),
-    cancelLabel: isCompleted ? 'Back to overview' : 'Cancel',
+    cancelLabel: 'Back to overview',
   }
 }

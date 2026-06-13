@@ -30,8 +30,11 @@ interface ProjectDetailsFormProps {
 
 export function ProjectDetailsForm({ resource }: ProjectDetailsFormProps) {
   const updateMutation = useUpdateProjectDetails(resource.resourceId)
-  const { resource: resourceWithChanges, setProjectDetails } =
-    useBufferedResource(resource)
+  const {
+    resource: resourceWithChanges,
+    setProjectDetails,
+    clearModule,
+  } = useBufferedResource(resource)
   const {
     register,
     control,
@@ -48,7 +51,6 @@ export function ProjectDetailsForm({ resource }: ProjectDetailsFormProps) {
     },
   })
   const {
-    isCompleted,
     isSubmitting,
     errorMessage,
     goToOverview,
@@ -59,12 +61,12 @@ export function ProjectDetailsForm({ resource }: ProjectDetailsFormProps) {
     resource,
     mutation: updateMutation,
     saveToBuffer: (payload) => setProjectDetails(resource.resourceId, payload),
+    clearBuffer: () => clearModule(resource.resourceId, 'projectDetails'),
     saveLabel: 'Save Project Details',
     saveErrorMessage: 'Unable to save Project Details. Please try again.',
   })
 
   const markChangesSaved = usePreserveFormChanges<ProjectDetails>({
-    enabled: isCompleted,
     isDirty,
     getValues: () => {
       const values = getValues()
