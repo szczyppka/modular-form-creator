@@ -28,17 +28,13 @@ export default function Resource() {
           <Breadcrumbs aria-label="Breadcrumb">
             <NavigationLink to={routeTo.resources()}>Resources</NavigationLink>
             <Separator aria-hidden="true">/</Separator>
-            <CurrentCrumb>
-              {resource.name}
-            </CurrentCrumb>
+            <CurrentCrumb>{resource.name}</CurrentCrumb>
           </Breadcrumbs>
 
           <Header>
             <Info>
               <h1>{resource.name}</h1>
-              <MutedText>
-                Created {formatDate(resource.createdAt)}
-              </MutedText>
+              <MutedText>Created {formatDate(resource.createdAt)}</MutedText>
             </Info>
 
             <HeaderActions>
@@ -64,9 +60,7 @@ export default function Resource() {
             <DetailsLink to={routeTo.resourceDetails(resource.resourceId)}>
               View summary
             </DetailsLink>
-          ) : (
-            null
-          )}
+          ) : null}
           <ProvisionResourceAction resource={resource} />
           <SaveCompletedResourceAction resource={resource} />
 

@@ -1,7 +1,14 @@
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { routeTo } from '@/app/routes'
-import { Breadcrumbs, CurrentCrumb, MutedText, NavigationLink, PageLayout, Separator } from '@/app/styles'
+import {
+  Breadcrumbs,
+  CurrentCrumb,
+  MutedText,
+  NavigationLink,
+  PageLayout,
+  Separator,
+} from '@/app/styles'
 import { CompletedEditNotice } from '@/features/resources/components/CompletedEditNotice'
 import { ProjectDetailsForm } from '@/features/resources/components/ProjectDetailsForm'
 import { ResourceGate } from '@/features/resources/components/ResourceGate'

@@ -76,9 +76,7 @@ describe('ResourceDetailsPage', () => {
 
     renderPage('/resources/7/details')
 
-    expect(
-      await screen.findByRole('link', { name: 'Resources' }),
-    ).toBeInTheDocument()
+    expect(await screen.findByRole('link', { name: 'Resources' })).toBeInTheDocument()
     expect(
       screen.queryByRole('heading', { name: 'Resource details' }),
     ).not.toBeInTheDocument()

@@ -2,7 +2,13 @@ import { Navigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import type { Resource } from '@/api/types'
 import { routeTo } from '@/app/routes'
-import { Breadcrumbs, CurrentCrumb, NavigationLink, PageLayout, Separator } from '@/app/styles'
+import {
+  Breadcrumbs,
+  CurrentCrumb,
+  NavigationLink,
+  PageLayout,
+  Separator,
+} from '@/app/styles'
 import { Badge, Card } from '@/design-system'
 import {
   getBasicInfoCompletion,
@@ -117,7 +123,7 @@ function Detail({ label, value }: DetailProps) {
 
 const DetailsCard = styled(Card)`
   min-width: 300px;
-  width:100%;
+  width: 100%;
 `
 
 const Header = styled.header`

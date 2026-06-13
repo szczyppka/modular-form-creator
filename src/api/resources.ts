@@ -65,12 +65,8 @@ export async function updateProjectDetails(
  * The only way to change status (`draft -> completed`).
  * Requires both modules complete; re-provisioning is rejected with 400.
  */
-export async function provisionResource(
-  id: ResourceId,
-): Promise<Resource> {
-  const { data } = await apiClient.patch<Resource>(
-    `${resourceEndpoint(id)}/provisioning`,
-  )
+export async function provisionResource(id: ResourceId): Promise<Resource> {
+  const { data } = await apiClient.patch<Resource>(`${resourceEndpoint(id)}/provisioning`)
   return data
 }
 

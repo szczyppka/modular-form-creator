@@ -66,7 +66,7 @@ export function ResourceCard({ resource, onDeleteRequest }: ResourceCardProps) {
 }
 
 const ResourceWrapper = styled(Card)`
-  padding: ${({ theme }) => theme.spacing.md}
+  padding: ${({ theme }) => theme.spacing.md};
 `
 
 const Name = styled.h2`
