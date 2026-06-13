@@ -3,7 +3,6 @@ import type {
   BasicInfoPayload,
   ListResourcesParams,
   ProjectDetailsPayload,
-  ProvisionResourceResponse,
   Resource,
   ResourceId,
   ResourceListResponse,
@@ -68,8 +67,8 @@ export async function updateProjectDetails(
  */
 export async function provisionResource(
   id: ResourceId,
-): Promise<ProvisionResourceResponse> {
-  const { data } = await apiClient.patch<ProvisionResourceResponse>(
+): Promise<Resource> {
+  const { data } = await apiClient.patch<Resource>(
     `${resourceEndpoint(id)}/provisioning`,
   )
   return data

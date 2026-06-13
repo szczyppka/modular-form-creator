@@ -46,11 +46,6 @@ export interface Resource {
   updatedAt: string
 }
 
-export interface ProvisionResourceResponse {
-  alreadyCompleted: false
-  resource: Resource
-}
-
 /** Accepted by all /{id} endpoints: numeric resourceId or Mongo ObjectId. */
 export type ResourceId = number | string
 

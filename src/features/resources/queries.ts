@@ -87,7 +87,7 @@ export function useProvisionResource(id: ResourceId) {
 
   return useMutation({
     mutationFn: () => provisionResource(id),
-    onSuccess: ({ resource }) => {
+    onSuccess: (resource) => {
       queryClient.setQueryData(resourceKeys.detail(resource.resourceId), resource)
       void queryClient.invalidateQueries({ queryKey: resourceKeys.lists() })
     },

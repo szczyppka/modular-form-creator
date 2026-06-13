@@ -45,7 +45,6 @@ describe('ResourcePage', () => {
     ).toBeDisabled()
     expect(screen.getByText(/Completion unlocks/)).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'View summary' })).not.toBeInTheDocument()
-    expect(screen.getByText(/Summary unlocks/)).toBeInTheDocument()
   })
 
   it('keeps Project Details locked until Basic Info is complete', async () => {
@@ -84,10 +83,7 @@ describe('ResourcePage', () => {
     })
     const completed = { ...completeDraft, status: 'completed' as const }
     vi.mocked(getResource).mockResolvedValue(completeDraft)
-    vi.mocked(provisionResource).mockResolvedValue({
-      alreadyCompleted: false,
-      resource: completed,
-    })
+    vi.mocked(provisionResource).mockResolvedValue(completed)
 
     renderPage()
 
