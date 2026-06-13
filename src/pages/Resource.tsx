@@ -25,13 +25,19 @@ export default function Resource() {
     <ResourceGate resourceId={resourceId}>
       {(resource) => (
         <PageLayout>
-          <NavigationLink to={routeTo.resources()}>Back to resources</NavigationLink>
+          <Breadcrumbs aria-label="Breadcrumb">
+            <NavigationLink to={routeTo.resources()}>Resources</NavigationLink>
+            <Separator aria-hidden="true">/</Separator>
+            <CurrentCrumb>
+              {resource.name}
+            </CurrentCrumb>
+          </Breadcrumbs>
 
           <Header>
             <Info>
               <h1>{resource.name}</h1>
               <MutedText>
-                Resource #{resource.resourceId} · Created {formatDate(resource.createdAt)}
+                Created {formatDate(resource.createdAt)}
               </MutedText>
             </Info>
 
@@ -59,7 +65,7 @@ export default function Resource() {
               View summary
             </DetailsLink>
           ) : (
-            <MutedText>Summary unlocks after both modules are complete.</MutedText>
+            null
           )}
           <ProvisionResourceAction resource={resource} />
           <SaveCompletedResourceAction resource={resource} />
@@ -74,6 +80,19 @@ export default function Resource() {
     </ResourceGate>
   )
 }
+const Breadcrumbs = styled.nav`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+`
+
+const Separator = styled.span`
+  color: ${({ theme }) => theme.colors.inkMuted};
+`
+
+const CurrentCrumb = styled.span`
+  color: ${({ theme }) => theme.colors.inkMuted};
+`
 
 const Info = styled.div`
   display: flex;

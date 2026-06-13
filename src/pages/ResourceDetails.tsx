@@ -2,7 +2,7 @@ import { Navigate, useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import type { Resource } from '@/api/types'
 import { routeTo } from '@/app/routes'
-import { NavigationLink, PageLayout } from '@/app/styles'
+import { Breadcrumbs, CurrentCrumb, NavigationLink, PageLayout, Separator } from '@/app/styles'
 import { Badge, Card } from '@/design-system'
 import {
   getBasicInfoCompletion,
@@ -67,7 +67,7 @@ function ResourceDetailsContent({ resource }: ResourceDetailsContentProps) {
       </Header>
 
       <SummaryContainer>
-        <Card variant="outline">
+        <DetailsCard variant="outline">
           <Section>
             <SectionHeader>
               <h2>Basic Info</h2>
@@ -81,9 +81,9 @@ function ResourceDetailsContent({ resource }: ResourceDetailsContentProps) {
               <Detail label="Priority" value={basicInfo.priority} />
             </DetailsList>
           </Section>
-        </Card>
+        </DetailsCard>
 
-        <Card variant="outline">
+        <DetailsCard variant="outline">
           <Section>
             <SectionHeader>
               <h2>Project Details</h2>
@@ -96,12 +96,11 @@ function ResourceDetailsContent({ resource }: ResourceDetailsContentProps) {
               <Detail label="Team members" value={projectDetails.options.join(', ')} />
             </DetailsList>
           </Section>
-        </Card>
+        </DetailsCard>
       </SummaryContainer>
     </PageLayout>
   )
 }
-
 interface DetailProps {
   label: string
   value: string
@@ -116,18 +115,9 @@ function Detail({ label, value }: DetailProps) {
   )
 }
 
-const Breadcrumbs = styled.nav`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-`
-
-const Separator = styled.span`
-  color: ${({ theme }) => theme.colors.inkMuted};
-`
-
-const CurrentCrumb = styled.span`
-  color: ${({ theme }) => theme.colors.inkMuted};
+const DetailsCard = styled(Card)`
+  min-width: 300px;
+  width:100%;
 `
 
 const Header = styled.header`

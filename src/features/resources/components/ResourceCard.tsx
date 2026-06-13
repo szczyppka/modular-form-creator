@@ -16,17 +16,13 @@ export function ResourceCard({ resource, onDeleteRequest }: ResourceCardProps) {
   const isCompleted = resource.status === 'completed'
 
   return (
-    <Card variant="outline">
+    <ResourceWrapper variant="outline">
       <CardBody>
         <ResourceInfo>
-          <ResourceCopy>
-            <ResourceLink to={routeTo.resource(resource.resourceId)}>
-              <Name>{resource.name}</Name>
-            </ResourceLink>
-            <Metadata>
-              Resource #{resource.resourceId} · Created {formatDate(resource.createdAt)}
-            </Metadata>
-          </ResourceCopy>
+          <ResourceLink to={routeTo.resource(resource.resourceId)}>
+            <Name>{resource.name}</Name>
+            <Metadata>Created: {formatDate(resource.createdAt)}</Metadata>
+          </ResourceLink>
           <ResourceStatusBadge status={resource.status} />
         </ResourceInfo>
 
@@ -65,12 +61,17 @@ export function ResourceCard({ resource, onDeleteRequest }: ResourceCardProps) {
           </IconButton>
         </Actions>
       </CardBody>
-    </Card>
+    </ResourceWrapper>
   )
 }
 
+const ResourceWrapper = styled(Card)`
+  padding: ${({ theme }) => theme.spacing.md}
+`
+
 const Name = styled.h2`
   margin: 0;
+  padding-bottom: 0.5em;
   font-family: ${({ theme }) => theme.typography.heading};
   font-size: 1rem;
   color: ${({ theme }) => theme.colors.inkStrong};
@@ -100,12 +101,6 @@ const ResourceInfo = styled.div`
   min-width: 0;
   gap: ${({ theme }) => theme.spacing.md};
 `
-
-const ResourceCopy = styled.div`
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.xs};
-`
-
 const Metadata = styled.p`
   font-size: 0.85rem;
   color: ${({ theme }) => theme.colors.inkMuted};

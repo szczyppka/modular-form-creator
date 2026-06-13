@@ -1,7 +1,7 @@
 import { useParams } from 'react-router-dom'
 import styled from 'styled-components'
 import { routeTo } from '@/app/routes'
-import { MutedText, NavigationLink, PageLayout } from '@/app/styles'
+import { Breadcrumbs, CurrentCrumb, MutedText, NavigationLink, PageLayout, Separator } from '@/app/styles'
 import { CompletedEditNotice } from '@/features/resources/components/CompletedEditNotice'
 import { ProjectDetailsForm } from '@/features/resources/components/ProjectDetailsForm'
 import { ResourceGate } from '@/features/resources/components/ResourceGate'
@@ -18,11 +18,16 @@ export default function ProjectDetails() {
 
         return (
           <PageLayout>
-            <NavigationLink to={routeTo.resource(resource.resourceId)}>
-              Back to overview
-            </NavigationLink>
+            <Breadcrumbs aria-label="Breadcrumb">
+              <NavigationLink to={routeTo.resources()}>Resources</NavigationLink>
+              <Separator aria-hidden="true">/</Separator>
+              <NavigationLink to={routeTo.resource(resource.resourceId)}>
+                {resource.name}
+              </NavigationLink>
+              <Separator aria-hidden="true">/</Separator>
+              <CurrentCrumb>Project Details</CurrentCrumb>
+            </Breadcrumbs>
             <h1>Project Details</h1>
-            <MutedText>{resource.name}</MutedText>
 
             <CompletedEditNotice status={resource.status} />
 

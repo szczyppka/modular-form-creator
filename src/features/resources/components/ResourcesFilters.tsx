@@ -31,7 +31,6 @@ export function ResourcesFilters({
     <Bar>
       <SearchFieldContainer>
         <SearchField
-          key={searchTerm}
           initialValue={searchTerm}
           onSearch={(name) => onChange({ name, page: 1 })}
         />
@@ -66,8 +65,10 @@ export function ResourcesFilters({
 const Bar = styled.div`
   display: flex;
   align-items: flex-end;
-  flex-wrap: wrap;
   gap: ${({ theme }) => theme.spacing.md};
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+  }
 `
 
 const SearchFieldContainer = styled.div`

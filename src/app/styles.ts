@@ -2,7 +2,9 @@ import { Link } from 'react-router-dom'
 import styled from 'styled-components'
 
 export const PageLayout = styled.section`
-  width: min(920px, 100%);
+  width: 100%;
+  min-width: 300px;
+  max-width: 900px;
   margin-inline: auto;
   padding: ${({ theme }) => theme.spacing.xl};
   display: flex;
@@ -26,9 +28,9 @@ export const MutedText = styled.p`
 export const FormStack = styled.form`
   width: 100%;
   display: flex;
+  margin: auto;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
-  max-width: 560px;
 `
 
 export const FormActions = styled.div`
@@ -46,4 +48,17 @@ export const InlineAction = styled.div`
 
 export const ErrorMessage = styled.p`
   color: ${({ theme }) => theme.colors.warning};
+`
+export const Breadcrumbs = styled.nav`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.xs};
+`
+
+export const Separator = styled.span`
+  color: ${({ theme }) => theme.colors.inkMuted};
+`
+
+export const CurrentCrumb = styled.span`
+  color: ${({ theme }) => theme.colors.inkMuted};
 `
