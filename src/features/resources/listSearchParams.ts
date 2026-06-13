@@ -7,10 +7,6 @@ export interface ResourcesListUrlState {
   sortOrder: 'asc' | 'desc'
 }
 
-/**
- * URL is the source of truth for list state — filters survive refresh
- * and the view is shareable. Invalid values fall back to safe defaults.
- */
 export function parseListSearchParams(
   searchParams: URLSearchParams,
 ): ResourcesListUrlState {
@@ -26,13 +22,25 @@ export function parseListSearchParams(
   }
 }
 
-/** Serializes list state back to URL params, omitting default values. */
 export function buildListSearchParams(state: ResourcesListUrlState): URLSearchParams {
   const params = new URLSearchParams()
-  if (state.page > 1) params.set('page', String(state.page))
-  if (state.status) params.set('status', state.status)
-  if (state.name) params.set('name', state.name)
-  if (state.sortOrder !== 'desc') params.set('sort', state.sortOrder)
+
+  if (state.page > 1) {
+    params.set('page', String(state.page))
+  }
+
+  if (state.status) {
+    params.set('status', state.status)
+  }
+
+  if (state.name) {
+    params.set('name', state.name)
+  }
+
+  if (state.sortOrder !== 'desc') {
+    params.set('sort', state.sortOrder)
+  }
+
   return params
 }
 

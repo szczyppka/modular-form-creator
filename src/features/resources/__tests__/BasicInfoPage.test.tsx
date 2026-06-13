@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getResource, updateBasicInfo } from '@/api/resources'
-import BasicInfoPage from '@/pages/BasicInfoPage'
+import BasicInfoPage from '@/pages/BasicInfo'
 import { renderWithProviders } from '@/test-utils/renderWithProviders'
 import { createResourceFixture } from './resourceTestFixture'
 
@@ -43,8 +43,6 @@ describe('BasicInfoPage', () => {
 
     renderPage()
 
-    // the name is not editable, so the form renders no input for it —
-    // the payload still carries the current value (required by the API contract)
     expect(await screen.findByText(resource.name)).toBeInTheDocument()
     expect(screen.queryByLabelText('Resource name')).not.toBeInTheDocument()
 
@@ -66,5 +64,4 @@ describe('BasicInfoPage', () => {
     })
     expect(await screen.findByText('Resource overview')).toBeInTheDocument()
   })
-
 })

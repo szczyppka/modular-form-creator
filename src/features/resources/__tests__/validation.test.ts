@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { basicInfoSchema } from '../basicInfoSchema'
-import { createResourceSchema } from '../createResourceSchema'
-import { projectDetailsSchema } from '../projectDetailsSchema'
+import { basicInfoSchema } from '../schemas/basicInfo'
+import { createResourceSchema } from '../schemas/createResource'
+import { projectDetailsSchema } from '../schemas/projectDetails'
 
 describe('resource form validation', () => {
   it('normalizes a valid resource name and rejects names outside the API contract', () => {
-    expect(createResourceSchema.parse({ resourceName: '  Customer onboarding  ' })).toEqual(
-      { resourceName: 'Customer onboarding' },
-    )
+    expect(
+      createResourceSchema.parse({ resourceName: '  Customer onboarding  ' }),
+    ).toEqual({ resourceName: 'Customer onboarding' })
     expect(
       createResourceSchema.safeParse({ resourceName: 'a'.repeat(256) }).success,
     ).toBe(false)

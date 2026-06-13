@@ -23,7 +23,6 @@ vi.mock('@/api/resources', async (importOriginal) => {
 const resource = createResourceFixture()
 const mockedDeleteResource = vi.mocked(deleteResource)
 
-/** Minimal consumer mirroring how list/overview drive the shared dialog. */
 function DialogHarness({ onDeleted }: { onDeleted?: () => void }) {
   const [target, setTarget] = useState<DeleteTarget | null>(null)
 

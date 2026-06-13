@@ -3,9 +3,9 @@ import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getResource, updateBasicInfo } from '@/api/resources'
-import BasicInfoPage from '@/pages/BasicInfoPage'
-import ResourceDetailsPage from '@/pages/ResourceDetailsPage'
-import ResourcePage from '@/pages/ResourcePage'
+import BasicInfoPage from '@/pages/BasicInfo'
+import ResourceDetailsPage from '@/pages/ResourceDetails'
+import ResourcePage from '@/pages/Resource'
 import { renderWithProviders } from '@/test-utils/renderWithProviders'
 import { createResourceFixture } from './resourceTestFixture'
 
@@ -76,7 +76,6 @@ describe('ResourceDetailsPage', () => {
 
     renderPage('/resources/7/details')
 
-    // the summary route is guarded — direct URL entry lands on the overview
     expect(
       await screen.findByRole('link', { name: 'Back to resources' }),
     ).toBeInTheDocument()

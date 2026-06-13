@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { getResource, updateProjectDetails } from '@/api/resources'
-import ProjectDetailsPage from '@/pages/ProjectDetailsPage'
+import ProjectDetailsPage from '@/pages/ProjectDetails'
 import { renderWithProviders } from '@/test-utils/renderWithProviders'
 import { createResourceFixture } from './resourceTestFixture'
 
@@ -86,5 +86,4 @@ describe('ProjectDetailsPage', () => {
     })
     expect(await screen.findByText('Resource overview')).toBeInTheDocument()
   })
-
 })
