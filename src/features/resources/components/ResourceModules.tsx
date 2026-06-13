@@ -2,14 +2,36 @@ import styled from 'styled-components'
 import type { Resource } from '@/api/types'
 import { routeTo } from '@/app/routes'
 import { NavigationLink } from '@/app/styles'
-import { Card } from '@/design-system'
+import { Badge, Card } from '@/design-system'
 import {
   getBasicInfoCompletion,
   getProjectDetailsCompletion,
   type ModuleCompletion,
 } from '../completeness'
 import { useBufferedResource } from '../edit-buffer/useBufferedResource'
+import { useResourceReadiness } from '../hooks/useResourceReadiness'
 import { ModuleCompletionBadge } from './ModuleCompletionBadge'
+
+/**
+ * A module is `complete` only once its edits are saved. `unsaved` means it's
+ * filled locally but not yet persisted — so it must not read as done.
+ */
+type ModuleStatus = 'complete' | 'incomplete' | 'unsaved'
+
+function getModuleStatus(
+  isCompletedResource: boolean,
+  bufferedComplete: boolean,
+  hasUnsavedEdits: boolean,
+  isSaved: boolean,
+): ModuleStatus {
+  if (isCompletedResource) {
+    return bufferedComplete ? 'complete' : 'incomplete'
+  }
+  if (hasUnsavedEdits && bufferedComplete) {
+    return 'unsaved'
+  }
+  return isSaved ? 'complete' : 'incomplete'
+}
 
 interface ResourceModulesProps {
   resource: Resource
@@ -17,11 +39,24 @@ interface ResourceModulesProps {
 
 export function ResourceModules({ resource }: ResourceModulesProps) {
   const { resource: resourceWithChanges } = useBufferedResource(resource)
-  const { basicInfo, projectDetails } = resourceWithChanges
-  const basicInfoCompletion = getBasicInfoCompletion(basicInfo)
-  const projectDetailsCompletion = getProjectDetailsCompletion(projectDetails)
-  const canEditProjectDetails =
-    resource.status === 'completed' || basicInfoCompletion.isComplete
+  const {
+    hasUnsavedBasicInfo,
+    hasUnsavedProjectDetails,
+    isBasicInfoSaved,
+    isProjectDetailsSaved,
+  } = useResourceReadiness(resource)
+
+  const isCompletedResource = resource.status === 'completed'
+  // Progress bars reflect local edits; the badge and gates reflect saved state.
+  const basicInfoCompletion = getBasicInfoCompletion(resourceWithChanges.basicInfo)
+  const projectDetailsCompletion = getProjectDetailsCompletion(
+    resourceWithChanges.projectDetails,
+  )
+
+  const canEditProjectDetails = isCompletedResource || isBasicInfoSaved
+  const projectDetailsLockedHint = hasUnsavedBasicInfo
+    ? 'Submit Basic Info to unlock'
+    : undefined
 
   return (
     <Grid aria-label="Resource modules">
@@ -30,6 +65,12 @@ export function ResourceModules({ resource }: ResourceModulesProps) {
           title="Basic Info"
           editPath={routeTo.basicInfo(resource.resourceId)}
           completion={basicInfoCompletion}
+          status={getModuleStatus(
+            isCompletedResource,
+            basicInfoCompletion.isComplete,
+            hasUnsavedBasicInfo,
+            isBasicInfoSaved,
+          )}
           canEdit
         />
       </li>
@@ -38,7 +79,14 @@ export function ResourceModules({ resource }: ResourceModulesProps) {
           title="Project Details"
           editPath={routeTo.projectDetails(resource.resourceId)}
           completion={projectDetailsCompletion}
+          status={getModuleStatus(
+            isCompletedResource,
+            projectDetailsCompletion.isComplete,
+            hasUnsavedProjectDetails,
+            isProjectDetailsSaved,
+          )}
           canEdit={canEditProjectDetails}
+          lockedHint={projectDetailsLockedHint}
         />
       </li>
     </Grid>
@@ -49,20 +97,30 @@ interface ResourceModuleCardProps {
   title: string
   editPath: string
   completion: ModuleCompletion
+  status: ModuleStatus
   canEdit: boolean
+  lockedHint?: string
 }
 
 function ResourceModuleCard({
   title,
   editPath,
   completion,
+  status,
   canEdit,
+  lockedHint,
 }: ResourceModuleCardProps) {
+  const isComplete = status === 'complete'
+
   return (
     <ModuleCard variant="outline">
       <ModuleHeader>
         <ModuleName>{title}</ModuleName>
-        <ModuleCompletionBadge isComplete={completion.isComplete} />
+        {status === 'unsaved' ? (
+          <Badge variant="warning">Unsaved</Badge>
+        ) : (
+          <ModuleCompletionBadge isComplete={isComplete} />
+        )}
       </ModuleHeader>
 
       <ProgressTrack
@@ -72,17 +130,17 @@ function ResourceModuleCard({
         aria-valuemin={0}
         aria-valuemax={100}
       >
-        <ProgressFill
-          $percentage={completion.percentage}
-          $isComplete={completion.isComplete}
-        />
+        <ProgressFill $percentage={completion.percentage} $isComplete={isComplete} />
       </ProgressTrack>
       <ProgressLabel>
         {completion.completedFields} of {completion.totalFields} fields completed
       </ProgressLabel>
 
       <ModuleFooter>
-        <ModuleAction canEdit={canEdit} editPath={editPath} />
+        {status === 'unsaved' ? (
+          <ModuleNote>Submit to save your changes.</ModuleNote>
+        ) : null}
+        <ModuleAction canEdit={canEdit} editPath={editPath} lockedHint={lockedHint} />
       </ModuleFooter>
     </ModuleCard>
   )
@@ -91,11 +149,12 @@ function ResourceModuleCard({
 interface ModuleActionProps {
   canEdit: boolean
   editPath: string
+  lockedHint?: string
 }
 
-function ModuleAction({ canEdit, editPath }: ModuleActionProps) {
+function ModuleAction({ canEdit, editPath, lockedHint }: ModuleActionProps) {
   if (!canEdit) {
-    return <LockedLabel>Locked</LockedLabel>
+    return <LockedLabel>{lockedHint ?? 'Locked'}</LockedLabel>
   }
 
   return <ModuleLink to={editPath}>Edit</ModuleLink>
@@ -163,6 +222,16 @@ const ProgressLabel = styled.p`
 
 const ModuleFooter = styled.div`
   margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+  align-items: flex-start;
+`
+
+const ModuleNote = styled.p`
+  margin: 0;
+  font-size: 0.85rem;
+  color: ${({ theme }) => theme.colors.warning};
 `
 
 const ModuleLink = styled(NavigationLink)`
