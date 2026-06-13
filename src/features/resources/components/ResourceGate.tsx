@@ -7,14 +7,9 @@ import { useResource } from '../queries'
 
 interface ResourceGateProps {
   resourceId: string | undefined
-  /** Render prop — receives the loaded resource, so consumers skip state plumbing. */
   children: (resource: Resource) => ReactNode
 }
 
-/**
- * Shared guard for all /resources/:resourceId pages: resolves the route param
- * into a loaded resource and renders exactly one state on the way.
- */
 export function ResourceGate({ resourceId, children }: ResourceGateProps) {
   const resourceQuery = useResource(resourceId ?? '')
 
@@ -51,6 +46,9 @@ export function ResourceGate({ resourceId, children }: ResourceGateProps) {
 }
 
 const StateMessage = styled.p`
-  margin: ${({ theme }) => theme.spacing.xl};
+  width: min(920px, 100%);
+  margin: ${({ theme }) => theme.spacing.xl} auto;
+  padding-inline: ${({ theme }) => theme.spacing.xl};
+  text-align: center;
   color: ${({ theme }) => theme.colors.inkMuted};
 `

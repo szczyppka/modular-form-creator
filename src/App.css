@@ -1,1 +1,8 @@
-/* App styles — add your styles here */
+html {
+  scrollbar-gutter: stable;
+}
+
+#root {
+  width: 100%;
+  min-height: 100vh;
+}

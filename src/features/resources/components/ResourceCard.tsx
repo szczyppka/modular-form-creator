@@ -1,9 +1,9 @@
-import { memo } from 'react'
 import { Link } from 'react-router-dom'
 import styled from 'styled-components'
 import type { Resource } from '@/api/types'
 import { routeTo } from '@/app/routes'
 import { Card, IconButton } from '@/design-system'
+import { formatDate } from '@/shared/formatDate'
 import type { DeleteTarget } from './DeleteResourceDialog'
 import { ResourceStatusBadge } from './ResourceStatusBadge'
 
@@ -12,19 +12,21 @@ interface ResourceCardProps {
   onDeleteRequest: (target: DeleteTarget) => void
 }
 
-export const ResourceCard = memo(function ResourceCard({
-  resource,
-  onDeleteRequest,
-}: ResourceCardProps) {
+export function ResourceCard({ resource, onDeleteRequest }: ResourceCardProps) {
   const isCompleted = resource.status === 'completed'
 
   return (
     <Card variant="outline">
       <CardBody>
         <ResourceInfo>
-          <ResourceLink to={routeTo.resource(resource.resourceId)}>
-            <Name>{resource.name}</Name>
-          </ResourceLink>
+          <ResourceCopy>
+            <ResourceLink to={routeTo.resource(resource.resourceId)}>
+              <Name>{resource.name}</Name>
+            </ResourceLink>
+            <Metadata>
+              Resource #{resource.resourceId} · Created {formatDate(resource.createdAt)}
+            </Metadata>
+          </ResourceCopy>
           <ResourceStatusBadge status={resource.status} />
         </ResourceInfo>
 
@@ -65,7 +67,7 @@ export const ResourceCard = memo(function ResourceCard({
       </CardBody>
     </Card>
   )
-})
+}
 
 const Name = styled.h2`
   margin: 0;
@@ -97,6 +99,16 @@ const ResourceInfo = styled.div`
   flex-wrap: wrap;
   min-width: 0;
   gap: ${({ theme }) => theme.spacing.md};
+`
+
+const ResourceCopy = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.xs};
+`
+
+const Metadata = styled.p`
+  font-size: 0.85rem;
+  color: ${({ theme }) => theme.colors.inkMuted};
 `
 
 const Actions = styled.div`

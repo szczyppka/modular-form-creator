@@ -3,10 +3,15 @@ import styled from 'styled-components'
 
 export const PageLayout = styled.section`
   width: min(920px, 100%);
+  margin-inline: auto;
   padding: ${({ theme }) => theme.spacing.xl};
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.lg};
+
+  @media (max-width: 640px) {
+    padding: ${({ theme }) => theme.spacing.md};
+  }
 `
 
 export const NavigationLink = styled(Link)`
@@ -19,6 +24,7 @@ export const MutedText = styled.p`
 `
 
 export const FormStack = styled.form`
+  width: 100%;
   display: flex;
   flex-direction: column;
   gap: ${({ theme }) => theme.spacing.md};
