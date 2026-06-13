@@ -25,9 +25,9 @@ const projectDetails: ProjectDetails = {
 describe('resource completion rules', () => {
   it('calculates module progress from required business fields', () => {
     expect(getBasicInfoCompletion({ ...basicInfo, description: '' })).toEqual({
-      completedFields: 4,
-      totalFields: 5,
-      percentage: 80,
+      completedFields: 3,
+      totalFields: 4,
+      percentage: 75,
       isComplete: false,
     })
     expect(getProjectDetailsCompletion({ ...projectDetails, options: [] })).toEqual({
@@ -57,9 +57,9 @@ describe('resource completion rules', () => {
         owner: 'Jane 123',
       }),
     ).toEqual({
-      completedFields: 4,
-      totalFields: 5,
-      percentage: 80,
+      completedFields: 3,
+      totalFields: 4,
+      percentage: 75,
       isComplete: false,
     })
     expect(

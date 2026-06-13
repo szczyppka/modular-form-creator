@@ -52,8 +52,11 @@ function getModuleCompletion(fields: readonly boolean[]): ModuleCompletion {
 }
 
 export function getBasicInfoCompletion(basicInfo: BasicInfo): ModuleCompletion {
+  // `resourceName` is set at creation and never user-editable, so it's left out
+  // of the progress the user sees — they can only complete these four fields.
+  // It is still validated by `isBasicInfoComplete` (the provisioning rule) and
+  // re-sent on submit.
   const fields = [
-    basicInfoPayloadSchema.shape.resourceName.safeParse(basicInfo.resourceName).success,
     basicInfoPayloadSchema.shape.owner.safeParse(basicInfo.owner).success,
     basicInfoPayloadSchema.shape.email.safeParse(basicInfo.email).success,
     basicInfoPayloadSchema.shape.description.safeParse(basicInfo.description).success,
