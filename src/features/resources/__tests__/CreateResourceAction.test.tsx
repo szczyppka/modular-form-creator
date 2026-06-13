@@ -60,7 +60,7 @@ describe('create resource drawer', () => {
     await user.click(within(dialog).getByRole('button', { name: 'Create resource' }))
 
     expect(
-      await within(dialog).findByText('resourceName must be unique'),
+      await within(dialog).findByText('This resource name already exists.'),
     ).toBeInTheDocument()
     expect(screen.getByRole('dialog', { name: 'Create resource' })).toBeInTheDocument()
   })

@@ -38,7 +38,13 @@ export function CreateResourceForm() {
       },
       onError: (error) => {
         if (error instanceof ApiError && error.isClientError) {
-          setError('resourceName', { type: 'server', message: error.message })
+          let message = error.message
+
+          if (error.message === 'resourceName must be unique') {
+            message = 'This resource name already exists.'
+          }
+
+          setError('resourceName', { type: 'server', message })
         }
       },
     })
