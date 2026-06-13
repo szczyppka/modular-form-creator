@@ -31,7 +31,8 @@ Stop everything with `docker compose down` (add `-v` to also drop MongoDB data).
 
 ## Local frontend development
 
-Run only backend + mongo in Docker and the frontend on the host:
+Requires Node.js 20.19 or newer. Run only backend + mongo in Docker and the
+frontend on the host:
 
 ```bash
 docker compose up -d backend mongo
