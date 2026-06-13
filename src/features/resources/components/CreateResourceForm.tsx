@@ -2,14 +2,15 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { useNavigate } from 'react-router-dom'
 import { ApiError, getApiErrorMessage } from '@/api/apiError'
-import { ErrorMessage, FormStack, MutedText } from '@/app/styles'
+import { FormStack, MutedText } from '@/app/styles'
 import { routeTo } from '@/app/routes'
 import { Button, Input } from '@/design-system'
 import {
   createResourceSchema,
   type CreateResourceFormValues,
-} from '../createResourceSchema'
+} from '../schemas/createResource'
 import { useCreateResource } from '../queries'
+import { ErrorBanner } from './ErrorBanner'
 
 export function CreateResourceForm() {
   const navigate = useNavigate()
@@ -25,14 +26,10 @@ export function CreateResourceForm() {
   })
   const createError = createMutation.error
   const isSubmitting = createMutation.isPending
-  let errorMessage = getApiErrorMessage(
-    createError,
-    'Unable to create the resource. Please try again.',
-  )
-
-  if (createError instanceof ApiError && createError.isClientError) {
-    errorMessage = undefined
-  }
+  const isFieldError = createError instanceof ApiError && createError.isClientError
+  const errorMessage = isFieldError
+    ? undefined
+    : getApiErrorMessage(createError, 'Unable to create the resource. Please try again.')
 
   const onSubmit = handleSubmit(({ resourceName }) => {
     createMutation.mutate(resourceName, {
@@ -40,7 +37,6 @@ export function CreateResourceForm() {
         navigate(routeTo.resource(resource.resourceId))
       },
       onError: (error) => {
-        // backend validation (e.g. "resourceName must be unique") belongs at the field
         if (error instanceof ApiError && error.isClientError) {
           setError('resourceName', { type: 'server', message: error.message })
         }
@@ -64,7 +60,7 @@ export function CreateResourceForm() {
       <Button type="submit" disabled={isSubmitting} fullWidth>
         {isSubmitting ? 'Creating…' : 'Create resource'}
       </Button>
-      {errorMessage ? <ErrorMessage role="alert">{errorMessage}</ErrorMessage> : null}
+      <ErrorBanner message={errorMessage} />
     </FormStack>
   )
 }

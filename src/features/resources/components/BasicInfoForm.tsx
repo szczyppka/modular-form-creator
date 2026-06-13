@@ -1,17 +1,19 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import { PRIORITY_VALUES, type BasicInfo, type Resource } from '@/api/types'
-import { ErrorMessage, FormActions, FormStack } from '@/app/styles'
+import { FormActions, FormStack } from '@/app/styles'
 import { Button, Input, Select } from '@/design-system'
 import { buildSelectOptions } from '@/shared/selectOptions'
-import { basicInfoSchema, type BasicInfoFormValues } from '../basicInfoSchema'
-import { applyResourceEditBuffer } from '../edit-buffer/applyResourceEditBuffer'
+import { basicInfoSchema, type BasicInfoFormValues } from '../schemas/basicInfo'
+import { useBufferedResource } from '../edit-buffer/useBufferedResource'
 import { usePreserveFormChanges } from '../edit-buffer/usePreserveFormChanges'
-import { useResourceEditBuffer } from '../edit-buffer/useResourceEditBuffer'
 import { useUpdateBasicInfo } from '../queries'
-import { useModuleFormFlow } from '../useModuleFormFlow'
+import { useModuleFormFlow } from '../hooks/useModuleFormFlow'
+import { ErrorBanner } from './ErrorBanner'
 
-const PRIORITY_OPTIONS = buildSelectOptions(PRIORITY_VALUES, 'Select priority')
+const PRIORITY_OPTIONS = buildSelectOptions(PRIORITY_VALUES, {
+  placeholder: 'Select priority',
+})
 
 interface BasicInfoFormProps {
   resource: Resource
@@ -19,8 +21,8 @@ interface BasicInfoFormProps {
 
 export function BasicInfoForm({ resource }: BasicInfoFormProps) {
   const updateMutation = useUpdateBasicInfo(resource.resourceId)
-  const { buffer, setBasicInfo } = useResourceEditBuffer(resource.resourceId)
-  const resourceWithChanges = applyResourceEditBuffer(resource, buffer)
+  const { resource: resourceWithChanges, setBasicInfo } = useBufferedResource(resource)
+  const resourceName = resource.basicInfo.resourceName || resource.name
   const {
     register,
     getValues,
@@ -35,11 +37,19 @@ export function BasicInfoForm({ resource }: BasicInfoFormProps) {
       priority: resourceWithChanges.basicInfo.priority || undefined,
     },
   })
-  const isCompleted = resource.status === 'completed'
-  const { isSubmitting, errorMessage, goToOverview, saveModule } = useModuleFormFlow({
+  const {
+    isCompleted,
+    isSubmitting,
+    errorMessage,
+    goToOverview,
+    saveModule,
+    submitLabel,
+    cancelLabel,
+  } = useModuleFormFlow({
     resource,
     mutation: updateMutation,
     saveToBuffer: (payload) => setBasicInfo(resource.resourceId, payload),
+    saveLabel: 'Save Basic Info',
     saveErrorMessage: 'Unable to save Basic Info. Please try again.',
   })
 
@@ -50,7 +60,7 @@ export function BasicInfoForm({ resource }: BasicInfoFormProps) {
       const values = getValues()
 
       return {
-        resourceName: resource.basicInfo.resourceName || resource.name,
+        resourceName,
         owner: values.owner ?? '',
         email: values.email ?? '',
         description: values.description ?? '',
@@ -61,23 +71,9 @@ export function BasicInfoForm({ resource }: BasicInfoFormProps) {
   })
 
   const onSubmit = handleSubmit((values) => {
-    const payload = {
-      ...values,
-      resourceName: resource.basicInfo.resourceName || resource.name,
-    }
-
     markChangesSaved()
-    saveModule(payload)
+    saveModule({ ...values, resourceName })
   })
-
-  let submitButtonLabel = 'Save Basic Info'
-  if (isCompleted) {
-    submitButtonLabel = 'Save draft changes'
-  }
-  if (isSubmitting) {
-    submitButtonLabel = 'Saving…'
-  }
-  const cancelButtonLabel = isCompleted ? 'Back to overview' : 'Cancel'
 
   return (
     <FormStack onSubmit={onSubmit} noValidate>
@@ -120,13 +116,13 @@ export function BasicInfoForm({ resource }: BasicInfoFormProps) {
           disabled={isSubmitting}
           onClick={goToOverview}
         >
-          {cancelButtonLabel}
+          {cancelLabel}
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {submitButtonLabel}
+          {submitLabel}
         </Button>
       </FormActions>
-      {errorMessage ? <ErrorMessage role="alert">{errorMessage}</ErrorMessage> : null}
+      <ErrorBanner message={errorMessage} />
     </FormStack>
   )
 }

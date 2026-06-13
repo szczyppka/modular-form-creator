@@ -8,8 +8,7 @@ import {
   getProjectDetailsCompletion,
   type ModuleCompletion,
 } from '../completeness'
-import { applyResourceEditBuffer } from '../edit-buffer/applyResourceEditBuffer'
-import { useResourceEditBuffer } from '../edit-buffer/useResourceEditBuffer'
+import { useBufferedResource } from '../edit-buffer/useBufferedResource'
 import { ModuleCompletionBadge } from './ModuleCompletionBadge'
 
 interface ResourceModulesProps {
@@ -17,8 +16,7 @@ interface ResourceModulesProps {
 }
 
 export function ResourceModules({ resource }: ResourceModulesProps) {
-  const { buffer } = useResourceEditBuffer(resource.resourceId)
-  const resourceWithChanges = applyResourceEditBuffer(resource, buffer)
+  const { resource: resourceWithChanges } = useBufferedResource(resource)
   const { basicInfo, projectDetails } = resourceWithChanges
   const basicInfoCompletion = getBasicInfoCompletion(basicInfo)
   const projectDetailsCompletion = getProjectDetailsCompletion(projectDetails)

@@ -1,14 +1,23 @@
 import type { SelectOption } from '@/design-system'
 
-const capitalize = (value: string) => value.charAt(0).toUpperCase() + value.slice(1)
+function formatOptionLabel(value: string): string {
+  return value
+    .replace(/[-_]+/g, ' ')
+    .replace(/\b\w/g, (character) => character.toUpperCase())
+}
 
-/** Builds Select options from an enum value list, with a leading placeholder. */
+interface BuildSelectOptionsConfig {
+  placeholder?: string
+  getLabel?: (value: string) => string
+}
+
 export function buildSelectOptions(
   values: readonly string[],
-  placeholder: string,
+  { placeholder, getLabel = formatOptionLabel }: BuildSelectOptionsConfig = {},
 ): SelectOption[] {
-  return [
-    { value: '', label: placeholder },
-    ...values.map((value) => ({ value, label: capitalize(value) })),
-  ]
+  const options = values.map((value) => ({ value, label: getLabel(value) }))
+
+  return placeholder === undefined
+    ? options
+    : [{ value: '', label: placeholder }, ...options]
 }

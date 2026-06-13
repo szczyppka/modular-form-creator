@@ -1,28 +1,23 @@
 import styled from 'styled-components'
 import { getApiErrorMessage } from '@/api/apiError'
 import type { ResourceId } from '@/api/types'
-import { ErrorMessage, FormActions } from '@/app/styles'
+import { FormActions } from '@/app/styles'
 import { Button, Drawer } from '@/design-system'
 import { useResourceEditBuffer } from '../edit-buffer/useResourceEditBuffer'
 import { useDeleteResource } from '../queries'
+import { ErrorBanner } from './ErrorBanner'
 
-/** Minimal data the confirmation needs — callers don't pass whole resources around. */
 export interface DeleteTarget {
   resourceId: ResourceId
   name: string
 }
 
 interface DeleteResourceDialogProps {
-  /** `null` keeps the dialog closed; one shared instance serves any number of triggers. */
   target: DeleteTarget | null
   onClose: () => void
   onDeleted?: () => void
 }
 
-/**
- * Single shared confirmation dialog. List views render one instance for all
- * rows instead of mounting a drawer per card.
- */
 export function DeleteResourceDialog({
   target,
   onClose,
@@ -41,13 +36,19 @@ export function DeleteResourceDialog({
   )
 
   const close = () => {
-    if (isDeleting) return
+    if (isDeleting) {
+      return
+    }
+
     resetMutation()
     onClose()
   }
 
   const confirmDelete = () => {
-    if (!target) return
+    if (!target) {
+      return
+    }
+
     deleteResource(target.resourceId, {
       onSuccess: () => {
         clear(target.resourceId)
@@ -66,7 +67,7 @@ export function DeleteResourceDialog({
             Permanently delete <strong>{target.name}</strong>? This action cannot be
             undone.
           </ConfirmationCopy>
-          {errorMessage ? <ErrorMessage role="alert">{errorMessage}</ErrorMessage> : null}
+          <ErrorBanner message={errorMessage} />
           <FormActions>
             <Button
               type="button"

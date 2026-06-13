@@ -1,19 +1,15 @@
 import { getApiErrorMessage } from '@/api/apiError'
 import type { Resource } from '@/api/types'
-import { ErrorMessage, InlineAction, MutedText } from '@/app/styles'
+import { InlineAction, MutedText } from '@/app/styles'
 import { Button } from '@/design-system'
 import { hasCompleteModules } from '../completeness'
 import { useProvisionResource } from '../queries'
+import { ErrorBanner } from './ErrorBanner'
 
 interface ProvisionResourceActionProps {
   resource: Resource
 }
 
-/**
- * Provisioning is the only valid draft -> completed transition. The action
- * renders for drafts only — a completed resource cannot be re-provisioned,
- * so no control is offered at all.
- */
 export function ProvisionResourceAction({ resource }: ProvisionResourceActionProps) {
   const provisionMutation = useProvisionResource(resource.resourceId)
 
@@ -40,7 +36,7 @@ export function ProvisionResourceAction({ resource }: ProvisionResourceActionPro
       {!canProvision ? (
         <MutedText>Completion unlocks after both modules are complete.</MutedText>
       ) : null}
-      {errorMessage ? <ErrorMessage role="alert">{errorMessage}</ErrorMessage> : null}
+      <ErrorBanner message={errorMessage} />
     </InlineAction>
   )
 }

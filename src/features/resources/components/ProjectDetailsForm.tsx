@@ -6,20 +6,22 @@ import {
   type ProjectDetails,
   type Resource,
 } from '@/api/types'
-import { ErrorMessage, FormActions, FormStack } from '@/app/styles'
+import { FormActions, FormStack } from '@/app/styles'
 import { Button, CheckboxGroup, Input, Select } from '@/design-system'
 import { buildSelectOptions } from '@/shared/selectOptions'
 import {
   projectDetailsSchema,
   type ProjectDetailsFormValues,
-} from '../projectDetailsSchema'
-import { applyResourceEditBuffer } from '../edit-buffer/applyResourceEditBuffer'
+} from '../schemas/projectDetails'
+import { useBufferedResource } from '../edit-buffer/useBufferedResource'
 import { usePreserveFormChanges } from '../edit-buffer/usePreserveFormChanges'
-import { useResourceEditBuffer } from '../edit-buffer/useResourceEditBuffer'
 import { useUpdateProjectDetails } from '../queries'
-import { useModuleFormFlow } from '../useModuleFormFlow'
+import { useModuleFormFlow } from '../hooks/useModuleFormFlow'
+import { ErrorBanner } from './ErrorBanner'
 
-const CATEGORY_OPTIONS = buildSelectOptions(PROJECT_CATEGORY_VALUES, 'Select category')
+const CATEGORY_OPTIONS = buildSelectOptions(PROJECT_CATEGORY_VALUES, {
+  placeholder: 'Select category',
+})
 const TEAM_MEMBER_OPTIONS = Array.from(TEAM_MEMBER_VALUES)
 
 interface ProjectDetailsFormProps {
@@ -28,8 +30,8 @@ interface ProjectDetailsFormProps {
 
 export function ProjectDetailsForm({ resource }: ProjectDetailsFormProps) {
   const updateMutation = useUpdateProjectDetails(resource.resourceId)
-  const { buffer, setProjectDetails } = useResourceEditBuffer(resource.resourceId)
-  const resourceWithChanges = applyResourceEditBuffer(resource, buffer)
+  const { resource: resourceWithChanges, setProjectDetails } =
+    useBufferedResource(resource)
   const {
     register,
     control,
@@ -45,11 +47,19 @@ export function ProjectDetailsForm({ resource }: ProjectDetailsFormProps) {
       options: resourceWithChanges.projectDetails.options,
     },
   })
-  const isCompleted = resource.status === 'completed'
-  const { isSubmitting, errorMessage, goToOverview, saveModule } = useModuleFormFlow({
+  const {
+    isCompleted,
+    isSubmitting,
+    errorMessage,
+    goToOverview,
+    saveModule,
+    submitLabel,
+    cancelLabel,
+  } = useModuleFormFlow({
     resource,
     mutation: updateMutation,
     saveToBuffer: (payload) => setProjectDetails(resource.resourceId, payload),
+    saveLabel: 'Save Project Details',
     saveErrorMessage: 'Unable to save Project Details. Please try again.',
   })
 
@@ -73,15 +83,6 @@ export function ProjectDetailsForm({ resource }: ProjectDetailsFormProps) {
     markChangesSaved()
     saveModule(values)
   })
-
-  let submitButtonLabel = 'Save Project Details'
-  if (isCompleted) {
-    submitButtonLabel = 'Save draft changes'
-  }
-  if (isSubmitting) {
-    submitButtonLabel = 'Saving…'
-  }
-  const cancelButtonLabel = isCompleted ? 'Back to overview' : 'Cancel'
 
   return (
     <FormStack onSubmit={onSubmit} noValidate>
@@ -130,13 +131,13 @@ export function ProjectDetailsForm({ resource }: ProjectDetailsFormProps) {
           disabled={isSubmitting}
           onClick={goToOverview}
         >
-          {cancelButtonLabel}
+          {cancelLabel}
         </Button>
         <Button type="submit" disabled={isSubmitting}>
-          {submitButtonLabel}
+          {submitLabel}
         </Button>
       </FormActions>
-      {errorMessage ? <ErrorMessage role="alert">{errorMessage}</ErrorMessage> : null}
+      <ErrorBanner message={errorMessage} />
     </FormStack>
   )
 }

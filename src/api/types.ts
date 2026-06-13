@@ -1,4 +1,5 @@
-export type ResourceStatus = 'draft' | 'completed'
+export const RESOURCE_STATUS_VALUES = ['draft', 'completed'] as const
+export type ResourceStatus = (typeof RESOURCE_STATUS_VALUES)[number]
 
 export const PRIORITY_VALUES = ['low', 'medium', 'high'] as const
 export type Priority = (typeof PRIORITY_VALUES)[number]
