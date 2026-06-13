@@ -5,15 +5,17 @@ import type {
   ProjectDetailsPayload,
   Resource,
 } from '@/api/types'
+import { basicInfoPayloadSchema } from './schemas/basicInfo'
+import { projectDetailsSchema } from './schemas/projectDetails'
 
 export function isBasicInfoComplete(basicInfo: BasicInfo): basicInfo is BasicInfoPayload {
-  return getBasicInfoCompletion(basicInfo).isComplete
+  return basicInfoPayloadSchema.safeParse(basicInfo).success
 }
 
 export function isProjectDetailsComplete(
   projectDetails: ProjectDetails,
 ): projectDetails is ProjectDetailsPayload {
-  return getProjectDetailsCompletion(projectDetails).isComplete
+  return projectDetailsSchema.safeParse(projectDetails).success
 }
 
 type ResourceWithCompleteModules = Resource & {
@@ -37,8 +39,8 @@ export interface ModuleCompletion {
   isComplete: boolean
 }
 
-function getModuleCompletion(fields: readonly unknown[]): ModuleCompletion {
-  const completedFields = fields.filter(Boolean).length
+function getModuleCompletion(fields: readonly boolean[]): ModuleCompletion {
+  const completedFields = fields.filter((isValid) => isValid).length
   const totalFields = fields.length
 
   return {
@@ -51,11 +53,11 @@ function getModuleCompletion(fields: readonly unknown[]): ModuleCompletion {
 
 export function getBasicInfoCompletion(basicInfo: BasicInfo): ModuleCompletion {
   const fields = [
-    basicInfo.resourceName,
-    basicInfo.owner,
-    basicInfo.email,
-    basicInfo.description,
-    basicInfo.priority,
+    basicInfoPayloadSchema.shape.resourceName.safeParse(basicInfo.resourceName).success,
+    basicInfoPayloadSchema.shape.owner.safeParse(basicInfo.owner).success,
+    basicInfoPayloadSchema.shape.email.safeParse(basicInfo.email).success,
+    basicInfoPayloadSchema.shape.description.safeParse(basicInfo.description).success,
+    basicInfoPayloadSchema.shape.priority.safeParse(basicInfo.priority).success,
   ]
 
   return getModuleCompletion(fields)
@@ -65,10 +67,10 @@ export function getProjectDetailsCompletion(
   projectDetails: ProjectDetails,
 ): ModuleCompletion {
   const fields = [
-    projectDetails.projectName,
-    projectDetails.budget,
-    projectDetails.category,
-    projectDetails.options.length > 0,
+    projectDetailsSchema.shape.projectName.safeParse(projectDetails.projectName).success,
+    projectDetailsSchema.shape.budget.safeParse(projectDetails.budget).success,
+    projectDetailsSchema.shape.category.safeParse(projectDetails.category).success,
+    projectDetailsSchema.shape.options.safeParse(projectDetails.options).success,
   ]
 
   return getModuleCompletion(fields)

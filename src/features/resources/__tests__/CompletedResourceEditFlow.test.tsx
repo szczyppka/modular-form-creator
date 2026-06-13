@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -8,9 +8,9 @@ import {
   updateBasicInfo,
   updateProjectDetails,
 } from '@/api/resources'
-import BasicInfoPage from '@/pages/BasicInfoPage'
-import ProjectDetailsPage from '@/pages/ProjectDetailsPage'
-import ResourcePage from '@/pages/ResourcePage'
+import BasicInfoPage from '@/pages/BasicInfo'
+import ProjectDetailsPage from '@/pages/ProjectDetails'
+import ResourcePage from '@/pages/Resource'
 import { renderWithProviders } from '@/test-utils/renderWithProviders'
 import { createResourceFixture } from './resourceTestFixture'
 
@@ -126,15 +126,19 @@ describe('completed resource edit flow', () => {
     expect(replaceResource).not.toHaveBeenCalled()
   })
 
-  it('keeps incomplete changes in memory but blocks the full update', async () => {
+  it('keeps invalid changes in memory but blocks the full update', async () => {
     const user = userEvent.setup()
     renderFlow(`/resources/${completedResource.resourceId}/basic-info`)
 
-    await user.clear(await screen.findByLabelText('Owner'))
+    const ownerInput = await screen.findByLabelText('Owner')
+    await user.clear(ownerInput)
+    await user.type(ownerInput, 'Jane 123')
     await user.click(screen.getByRole('button', { name: 'Back to overview' }))
 
     expect(
-      await screen.findByText('The resource data is incomplete and cannot be saved.'),
+      await screen.findByText(
+        'Review invalid or incomplete module values before saving.',
+      ),
     ).toBeInTheDocument()
     expect(
       screen.queryByRole('button', { name: 'Save pending changes' }),
@@ -148,7 +152,54 @@ describe('completed resource edit flow', () => {
 
     expect(basicInfoModule).not.toBeNull()
     await user.click(within(basicInfoModule!).getByRole('link', { name: 'Edit' }))
-    expect(await screen.findByLabelText('Owner')).toHaveValue('')
+    expect(await screen.findByLabelText('Owner')).toHaveValue('Jane 123')
+  })
+
+  it('clears the buffer when the full update succeeds after leaving the overview', async () => {
+    const user = userEvent.setup()
+    let resolveReplace: (resource: typeof completedResource) => void = () => undefined
+
+    vi.mocked(replaceResource).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveReplace = resolve
+        }),
+    )
+    renderFlow(`/resources/${completedResource.resourceId}/basic-info`)
+
+    const ownerInput = await screen.findByLabelText('Owner')
+    await user.clear(ownerInput)
+    await user.type(ownerInput, 'John Smith')
+    await user.click(screen.getByRole('button', { name: 'Save draft changes' }))
+    await user.click(await screen.findByRole('button', { name: 'Save pending changes' }))
+
+    const modules = screen.getByRole('list', { name: 'Resource modules' })
+    const basicInfoModule = within(modules)
+      .getByRole('heading', { name: 'Basic Info' })
+      .closest('li')
+
+    expect(basicInfoModule).not.toBeNull()
+    await user.click(within(basicInfoModule!).getByRole('link', { name: 'Edit' }))
+
+    await act(async () => {
+      resolveReplace({
+        ...completedResource,
+        basicInfo: {
+          ...completedResource.basicInfo,
+          owner: 'John Smith',
+        },
+      })
+    })
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Owner')).toHaveValue('John Smith')
+    })
+    await user.click(screen.getByRole('button', { name: 'Back to overview' }))
+
+    expect(
+      await screen.findByRole('heading', { name: completedResource.name }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Unsaved local changes')).not.toBeInTheDocument()
   })
 
   it('loses automatically preserved edits after the provider is remounted', async () => {

@@ -1,11 +1,11 @@
 import { getApiErrorMessage } from '@/api/apiError'
 import type { Resource, ResourcePayload } from '@/api/types'
-import { ErrorMessage, InlineAction, MutedText } from '@/app/styles'
+import { InlineAction, MutedText } from '@/app/styles'
 import { Button } from '@/design-system'
 import { hasCompleteModules } from '../completeness'
-import { applyResourceEditBuffer } from '../edit-buffer/applyResourceEditBuffer'
-import { useResourceEditBuffer } from '../edit-buffer/useResourceEditBuffer'
+import { useBufferedResource } from '../edit-buffer/useBufferedResource'
 import { useReplaceResource } from '../queries'
+import { ErrorBanner } from './ErrorBanner'
 
 interface SaveCompletedResourceActionProps {
   resource: Resource
@@ -14,20 +14,18 @@ interface SaveCompletedResourceActionProps {
 export function SaveCompletedResourceAction({
   resource,
 }: SaveCompletedResourceActionProps) {
-  const { buffer, clear } = useResourceEditBuffer(resource.resourceId)
-  const replaceMutation = useReplaceResource(resource.resourceId)
+  const { resource: resourceWithChanges, buffer, clear } = useBufferedResource(resource)
+  const replaceMutation = useReplaceResource(resource.resourceId, {
+    onSuccess: () => clear(resource.resourceId),
+  })
 
   if (resource.status !== 'completed' || !buffer) {
     return null
   }
 
-  const resourceWithChanges = applyResourceEditBuffer(resource, buffer)
-
   if (!hasCompleteModules(resourceWithChanges)) {
     return (
-      <ErrorMessage role="alert">
-        The resource data is incomplete and cannot be saved.
-      </ErrorMessage>
+      <ErrorBanner message="Review invalid or incomplete module values before saving." />
     )
   }
 
@@ -48,15 +46,11 @@ export function SaveCompletedResourceAction({
       <Button
         type="button"
         disabled={isSubmitting}
-        onClick={() =>
-          replaceMutation.mutate(payload, {
-            onSuccess: () => clear(resource.resourceId),
-          })
-        }
+        onClick={() => replaceMutation.mutate(payload)}
       >
         {isSubmitting ? 'Saving…' : 'Save pending changes'}
       </Button>
-      {errorMessage ? <ErrorMessage role="alert">{errorMessage}</ErrorMessage> : null}
+      <ErrorBanner message={errorMessage} />
     </InlineAction>
   )
 }

@@ -22,7 +22,6 @@ import type {
   ResourcePayload,
 } from '@/api/types'
 
-/** Hierarchical query keys — invalidating `all` covers every resource query. */
 export const resourceKeys = {
   all: ['resources'] as const,
   lists: () => [...resourceKeys.all, 'list'] as const,
@@ -35,7 +34,6 @@ export function useResourcesList(params: ListResourcesParams) {
   return useQuery({
     queryKey: resourceKeys.list(params),
     queryFn: ({ signal }) => listResources(params, signal),
-    // keep showing the previous page while the next one loads — no layout flash
     placeholderData: keepPreviousData,
   })
 }
@@ -84,7 +82,6 @@ export function useUpdateProjectDetails(id: ResourceId) {
   })
 }
 
-/** The only way a resource can move from draft to completed. */
 export function useProvisionResource(id: ResourceId) {
   const queryClient = useQueryClient()
 
@@ -97,7 +94,11 @@ export function useProvisionResource(id: ResourceId) {
   })
 }
 
-export function useReplaceResource(id: ResourceId) {
+interface ReplaceResourceOptions {
+  onSuccess?: () => void
+}
+
+export function useReplaceResource(id: ResourceId, options: ReplaceResourceOptions = {}) {
   const queryClient = useQueryClient()
 
   return useMutation({
@@ -105,6 +106,7 @@ export function useReplaceResource(id: ResourceId) {
     onSuccess: (resource) => {
       queryClient.setQueryData(resourceKeys.detail(resource.resourceId), resource)
       void queryClient.invalidateQueries({ queryKey: resourceKeys.lists() })
+      options.onSuccess?.()
     },
   })
 }

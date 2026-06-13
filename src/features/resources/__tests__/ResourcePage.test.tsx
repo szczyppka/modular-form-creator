@@ -4,7 +4,7 @@ import { Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/api/apiError'
 import { getResource, provisionResource } from '@/api/resources'
-import ResourcePage from '@/pages/ResourcePage'
+import ResourcePage from '@/pages/Resource'
 import { renderWithProviders } from '@/test-utils/renderWithProviders'
 import { createResourceFixture } from './resourceTestFixture'
 
@@ -44,6 +44,8 @@ describe('ResourcePage', () => {
       await screen.findByRole('button', { name: 'Complete resource' }),
     ).toBeDisabled()
     expect(screen.getByText(/Completion unlocks/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'View summary' })).not.toBeInTheDocument()
+    expect(screen.getByText(/Summary unlocks/)).toBeInTheDocument()
   })
 
   it('keeps Project Details locked until Basic Info is complete', async () => {
@@ -89,6 +91,10 @@ describe('ResourcePage', () => {
 
     renderPage()
 
+    expect(await screen.findByRole('link', { name: 'View summary' })).toHaveAttribute(
+      'href',
+      `/resources/${resource.resourceId}/details`,
+    )
     await user.click(await screen.findByRole('button', { name: 'Complete resource' }))
 
     expect(vi.mocked(provisionResource)).toHaveBeenCalledWith(resource.resourceId)

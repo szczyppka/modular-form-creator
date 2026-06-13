@@ -49,4 +49,24 @@ describe('resource completion rules', () => {
       }),
     ).toBe(false)
   })
+
+  it('does not treat invalid non-empty values as complete', () => {
+    expect(
+      getBasicInfoCompletion({
+        ...basicInfo,
+        owner: 'Jane 123',
+      }),
+    ).toEqual({
+      completedFields: 4,
+      totalFields: 5,
+      percentage: 80,
+      isComplete: false,
+    })
+    expect(
+      getProjectDetailsCompletion({
+        ...projectDetails,
+        budget: '12.50',
+      }).isComplete,
+    ).toBe(false)
+  })
 })
